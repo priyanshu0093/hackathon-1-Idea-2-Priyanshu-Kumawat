@@ -10,7 +10,10 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   MONGODB_URI: z.string().optional().default(''),
-  FLIGHT_PROVIDER: z.enum(['amadeus', 'mock']).default('amadeus'),
+  FLIGHT_PROVIDER: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? 'amadeus' : val),
+    z.enum(['amadeus', 'mock']).default('amadeus')
+  ),
   AMADEUS_CLIENT_ID: z.string().optional().default(''),
   AMADEUS_CLIENT_SECRET: z.string().optional().default(''),
   AMADEUS_ENV: z.enum(['test', 'production']).default('test'),
