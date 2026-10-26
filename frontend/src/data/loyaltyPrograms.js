@@ -1,0 +1,82 @@
+// Loyalty programs and transferable points banks
+export const LOYALTY_PROGRAMS = [
+  {
+    id: 'amex_mr',
+    name: 'American Express Membership Rewards',
+    type: 'bank',
+    shortName: 'Amex MR',
+    defaultValuationCents: 1.5, // 1.5 euro cents per point
+    icon: '💳',
+    transferPartners: ['Iberia Plus', 'British Airways', 'Flying Blue', 'Virgin Atlantic', 'Delta Skymiles'],
+  },
+  {
+    id: 'chase_ur',
+    name: 'Chase Ultimate Rewards',
+    type: 'bank',
+    shortName: 'Chase UR',
+    defaultValuationCents: 1.6,
+    icon: '💳',
+    transferPartners: ['Iberia Plus', 'British Airways', 'Flying Blue', 'United MileagePlus', 'Virgin Atlantic'],
+  },
+  {
+    id: 'iberia_plus',
+    name: 'Iberia Plus (Avios)',
+    type: 'airline',
+    shortName: 'Iberia Avios',
+    defaultValuationCents: 1.3,
+    icon: '✈️',
+    alliance: 'Oneworld',
+  },
+  {
+    id: 'flying_blue',
+    name: 'Air France - KLM Flying Blue',
+    type: 'airline',
+    shortName: 'Flying Blue',
+    defaultValuationCents: 1.3,
+    icon: '✈️',
+    alliance: 'SkyTeam',
+  },
+  {
+    id: 'ba_avios',
+    name: 'British Airways Executive Club (Avios)',
+    type: 'airline',
+    shortName: 'BA Avios',
+    defaultValuationCents: 1.3,
+    icon: '✈️',
+    alliance: 'Oneworld',
+  },
+  {
+    id: 'miles_and_more',
+    name: 'Lufthansa Miles & More',
+    type: 'airline',
+    shortName: 'Miles & More',
+    defaultValuationCents: 1.4,
+    icon: '✈️',
+    alliance: 'Star Alliance',
+  },
+  {
+    id: 'virgin_red',
+    name: 'Virgin Atlantic Flying Club',
+    type: 'airline',
+    shortName: 'Virgin Flying Club',
+    defaultValuationCents: 1.2,
+    icon: '✈️',
+    alliance: 'SkyTeam',
+  },
+  {
+    id: 'qatar_privilege',
+    name: 'Qatar Airways Privilege Club (Avios)',
+    type: 'airline',
+    shortName: 'Qatar Avios',
+    defaultValuationCents: 1.4,
+    icon: '✈️',
+    alliance: 'Oneworld',
+  },
+];
+
+export const CABIN_CLASSES = [
+  { id: 'economy', label: 'Economy', badge: 'Standard' },
+  { id: 'premium_economy', label: 'Premium Economy', badge: 'Extra Comfort' },
+  { id: 'business', label: 'Business Class', badge: 'Lie-flat bed' },
+  { id: 'first', label: 'First Class', badge: 'Ultimate luxury' },
+];
