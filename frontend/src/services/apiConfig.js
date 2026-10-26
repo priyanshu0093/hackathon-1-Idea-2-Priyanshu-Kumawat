@@ -20,6 +20,7 @@ export const API_CONFIG = {
     awardSearch: '/api/v1/flights/award-search',
     savingsCalculation: '/api/v1/savings/calculate',
     airportsAutocomplete: '/api/v1/airports',
+    advisorAnalyze: '/api/v1/advisor/analyze',
     health: '/api/v1/health',
   },
 };

@@ -4,6 +4,7 @@ import { Footer } from '../components/layout/Footer';
 import { HeroSection } from '../components/sections/HeroSection';
 import { SearchPanel } from '../features/search/SearchPanel';
 import { SavingsHeroCard } from '../features/savings/SavingsHeroCard';
+import { TravelAdvisorPanel } from '../features/advisor/TravelAdvisorPanel';
 import { PopularHacks } from '../components/sections/PopularHacks';
 import { HowItWorks } from '../components/sections/HowItWorks';
 import { TrustSection } from '../components/sections/TrustSection';
@@ -183,14 +184,24 @@ export function LandingPage() {
               <div className="h-14 bg-slate-100 rounded-xl"></div>
             </div>
           ) : (
-            <SavingsHeroCard
-              hack={searchResult}
-              isSaved={isCurrentTripSaved}
-              onToggleSave={() => toggleSaveTrip(searchResult)}
-              onOpenBookingGuide={() => setIsBookingGuideOpen(true)}
-              formData={formData}
-              onSwitchToDemo={switchToDemo}
-            />
+            <>
+              <SavingsHeroCard
+                hack={searchResult}
+                isSaved={isCurrentTripSaved}
+                onToggleSave={() => toggleSaveTrip(searchResult)}
+                onOpenBookingGuide={() => setIsBookingGuideOpen(true)}
+                formData={formData}
+                onSwitchToDemo={switchToDemo}
+              />
+
+              {searchResult && (
+                <TravelAdvisorPanel
+                  searchResult={searchResult}
+                  formData={formData}
+                  dataSourceMode={dataSourceMode}
+                />
+              )}
+            </>
           )}
         </section>
 

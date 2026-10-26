@@ -13,6 +13,7 @@ import { awardProviderAdapter } from './providers/award/awardProvider.adapter.js
 import flightRoutes from './modules/flights/flight.routes.js';
 import savingsRoutes from './modules/savings/savings.routes.js';
 import airportRoutes from './modules/airports/airport.routes.js';
+import advisorRoutes from './modules/advisor/advisor.routes.js';
 
 const app = express();
 
@@ -60,6 +61,11 @@ app.get('/api/v1/health', (req, res) => {
         configured: awardProviderAdapter.isConfigured(),
         status: awardProviderAdapter.isConfigured() ? 'active' : 'unsupported (Phase 6)',
       },
+      advisorEngine: {
+        mode: 'rule_based_engine',
+        aiConfigured: false,
+        status: 'active (deterministic expert travel hacking engine)',
+      },
     },
     cache: flightCache.getStats(),
     timestamp: new Date().toISOString(),
@@ -70,6 +76,7 @@ app.get('/api/v1/health', (req, res) => {
 app.use('/api/v1/flights', flightRoutes);
 app.use('/api/v1/savings', savingsRoutes);
 app.use('/api/v1/airports', airportRoutes);
+app.use('/api/v1/advisor', advisorRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);
