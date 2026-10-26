@@ -1,0 +1,188 @@
+{
+  "meta": {
+    "count": 2,
+    "links": {
+      "self": "https://test.api.amadeus.com/v2/shopping/flight-offers"
+    }
+  },
+  "data": [
+    {
+      "type": "flight-offer",
+      "id": "1",
+      "source": "GDS",
+      "instantTicketingRequired": false,
+      "nonHomogeneous": false,
+      "oneWay": false,
+      "lastTicketingDate": "2026-11-01",
+      "numberOfBookableSeats": 7,
+      "itineraries": [
+        {
+          "duration": "PT8H20M",
+          "segments": [
+            {
+              "departure": {
+                "iataCode": "MAD",
+                "terminal": "4S",
+                "at": "2026-11-15T12:15:00"
+              },
+              "arrival": {
+                "iataCode": "JFK",
+                "terminal": "8",
+                "at": "2026-11-15T15:35:00"
+              },
+              "carrierCode": "IB",
+              "number": "6251",
+              "aircraft": {
+                "code": "359"
+              },
+              "duration": "PT8H20M",
+              "id": "1",
+              "numberOfStops": 0
+            }
+          ]
+        },
+        {
+          "duration": "PT7H35M",
+          "segments": [
+            {
+              "departure": {
+                "iataCode": "JFK",
+                "terminal": "8",
+                "at": "2026-11-25T17:50:00"
+              },
+              "arrival": {
+                "iataCode": "MAD",
+                "terminal": "4S",
+                "at": "2026-11-26T06:25:00"
+              },
+              "carrierCode": "IB",
+              "number": "6252",
+              "aircraft": {
+                "code": "359"
+              },
+              "duration": "PT7H35M",
+              "id": "2",
+              "numberOfStops": 0
+            }
+          ]
+        }
+      ],
+      "price": {
+        "currency": "EUR",
+        "total": "748.20",
+        "base": "580.00",
+        "fees": [
+          {
+            "amount": "0.00",
+            "type": "SUPPLIER"
+          }
+        ],
+        "grandTotal": "748.20"
+      },
+      "pricingOptions": {
+        "fareType": ["PUBLISHED"],
+        "includedCheckedBagsOnly": true
+      },
+      "validatingAirlineCodes": ["IB"],
+      "travelerPricings": [
+        {
+          "travelerId": "1",
+          "fareOption": "STANDARD",
+          "travelerType": "ADULT",
+          "price": {
+            "currency": "EUR",
+            "total": "748.20",
+            "base": "580.00"
+          },
+          "fareDetailsBySegment": [
+            {
+              "segmentId": "1",
+              "cabin": "ECONOMY",
+              "fareBasis": "SLNN00M4",
+              "class": "S"
+            },
+            {
+              "segmentId": "2",
+              "cabin": "ECONOMY",
+              "fareBasis": "SLNN00M4",
+              "class": "S"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "flight-offer",
+      "id": "2",
+      "source": "GDS",
+      "instantTicketingRequired": false,
+      "nonHomogeneous": false,
+      "oneWay": false,
+      "lastTicketingDate": "2026-11-01",
+      "numberOfBookableSeats": 4,
+      "itineraries": [
+        {
+          "duration": "PT8H45M",
+          "segments": [
+            {
+              "departure": {
+                "iataCode": "MAD",
+                "terminal": "4",
+                "at": "2026-11-15T10:30:00"
+              },
+              "arrival": {
+                "iataCode": "JFK",
+                "terminal": "8",
+                "at": "2026-11-15T14:15:00"
+              },
+              "carrierCode": "AA",
+              "number": "95",
+              "aircraft": {
+                "code": "772"
+              },
+              "duration": "PT8H45M",
+              "id": "3",
+              "numberOfStops": 0
+            }
+          ]
+        }
+      ],
+      "price": {
+        "currency": "EUR",
+        "total": "820.50",
+        "base": "640.00",
+        "grandTotal": "820.50"
+      },
+      "validatingAirlineCodes": ["AA"],
+      "travelerPricings": [
+        {
+          "travelerId": "1",
+          "fareOption": "STANDARD",
+          "travelerType": "ADULT",
+          "price": {
+            "currency": "EUR",
+            "total": "820.50",
+            "base": "640.00"
+          },
+          "fareDetailsBySegment": [
+            {
+              "segmentId": "3",
+              "cabin": "ECONOMY",
+              "class": "V"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dictionaries": {
+    "carriers": {
+      "IB": "Iberia",
+      "AA": "American Airlines"
+    },
+    "aircraft": {
+      "359": "Airbus A350-900",
+      "772": "Boeing 777-200"
+    }
+  }
+}

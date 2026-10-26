@@ -29,6 +29,7 @@ const DEFAULT_DATES = getDefaultDates();
 
 export function useFlightSearch() {
   const [activeMode, setActiveMode] = useState('quick'); // 'quick' | 'full'
+  const [dataSourceMode, setDataSourceMode] = useState('live'); // 'live' | 'demo'
 
   // Search form state
   const [formData, setFormData] = useState({
@@ -64,6 +65,7 @@ export function useFlightSearch() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState(null);
+  const [lastSearchParams, setLastSearchParams] = useState(null);
 
   // AbortController ref to safely cancel outdated in-flight requests
   const abortControllerRef = useRef(null);
@@ -159,7 +161,7 @@ export function useFlightSearch() {
   }, []);
 
   // Search execution
-  const executeSearch = useCallback(async (paramsToSearch) => {
+  const executeSearch = useCallback(async (paramsToSearch, overrideOptions = {}) => {
     // Abort previous in-flight request if still running
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -170,10 +172,14 @@ export function useFlightSearch() {
 
     setIsSearching(true);
     setSearchError(null);
+    setLastSearchParams(paramsToSearch);
+
+    const isDemoQuery = overrideOptions.useDemo ?? (dataSourceMode === 'demo');
 
     try {
       const flightOffers = await searchFlights(paramsToSearch, {
         signal: controller.signal,
+        useDemo: isDemoQuery,
       });
 
       const userBalanceNum = paramsToSearch.skipPoints ? 0 : Number(paramsToSearch.pointsBalance) || 0;
@@ -188,13 +194,12 @@ export function useFlightSearch() {
       setIsSearching(false);
     } catch (err) {
       if (err.name === 'AbortError') {
-        // Request was cancelled intentionally because user initiated a newer search
         return;
       }
-      setSearchError('Search failed: ' + (err.message || 'Unable to retrieve flight options.'));
+      setSearchError(err.message || 'Unable to retrieve flight options.');
       setIsSearching(false);
     }
-  }, []);
+  }, [dataSourceMode]);
 
   // Form submit handler
   const handleSearch = useCallback((e) => {
@@ -245,8 +250,8 @@ export function useFlightSearch() {
     }
   }, [activeMode, formData, executeSearch]);
 
-  // Set preset route from popular picks
-  const applyPresetRoute = useCallback((origin, destination, cabin = 'economy') => {
+  // Set preset route from popular picks (can run as demo hack)
+  const applyPresetRoute = useCallback((origin, destination, cabin = 'economy', options = {}) => {
     setFormData((prev) => ({
       ...prev,
       origin,
@@ -268,8 +273,23 @@ export function useFlightSearch() {
       pointsProgram: formData.pointsProgram,
       pointsBalance: formData.pointsBalance,
       skipPoints: formData.skipPoints,
-    });
+    }, options);
   }, [formData, executeSearch]);
+
+  // Retry previous search
+  const retrySearch = useCallback(() => {
+    if (lastSearchParams) {
+      executeSearch(lastSearchParams);
+    }
+  }, [lastSearchParams, executeSearch]);
+
+  // Switch to demo mode
+  const switchToDemo = useCallback(() => {
+    setDataSourceMode('demo');
+    if (lastSearchParams) {
+      executeSearch(lastSearchParams, { useDemo: true });
+    }
+  }, [lastSearchParams, executeSearch]);
 
   // Trigger initial search once on mount
   useEffect(() => {
@@ -295,6 +315,8 @@ export function useFlightSearch() {
   return {
     activeMode,
     setActiveMode,
+    dataSourceMode,
+    setDataSourceMode,
     formData,
     updateField,
     swapAirports,
@@ -309,5 +331,7 @@ export function useFlightSearch() {
     fullValidationErrors,
     legErrors,
     handleSearch,
+    retrySearch,
+    switchToDemo,
   };
 }
