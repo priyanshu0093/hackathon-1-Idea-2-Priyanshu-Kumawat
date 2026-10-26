@@ -9,13 +9,27 @@ import {
   TrendingDown, 
   ChevronRight, 
   ArrowUpRight,
-  AlertTriangle,
   Radio,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  Layers
 } from 'lucide-react';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 import { PointsShortfallCard } from './PointsShortfallCard';
+
+// Helper to format ISO timestamp into readable time and date
+function formatFlightTime(isoString) {
+  if (!isoString) return { time: 'N/A', date: '' };
+  try {
+    const d = new Date(isoString);
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return { time, date };
+  } catch {
+    return { time: isoString, date: '' };
+  }
+}
 
 export function SavingsHeroCard({
   hack,
@@ -26,6 +40,7 @@ export function SavingsHeroCard({
   onSwitchToDemo,
 }) {
   const [activeTab, setActiveTab] = useState('best_value');
+  const [selectedOfferIndex, setSelectedOfferIndex] = useState(0);
 
   if (!hack) return null;
 
@@ -71,26 +86,59 @@ export function SavingsHeroCard({
     programName,
     isDemo = true,
     isCashOnly = false,
+    dataSource = 'demo',
     legs,
     itineraries,
     price,
+    allOffers,
   } = hack;
 
-  // Case 1: Live Cash Fare Available, but Award Seat Inventory is Unavailable (Section 8 Rule)
-  if (isCashOnly) {
-    const outbound = itineraries?.[0];
-    const returnItin = itineraries?.[1];
+  // Selected offer if multiple offers exist
+  const activeOffer = (allOffers && allOffers[selectedOfferIndex]) || hack;
+  const activePrice = activeOffer.price || price || {};
+  const activeItineraries = activeOffer.itineraries || itineraries || [];
+  const outbound = activeItineraries[0] || null;
+  const returnItin = activeItineraries[1] || null;
 
+  const outboundDep = formatFlightTime(outbound?.departureTime || outbound?.segments?.[0]?.departure?.at);
+  const outboundArr = formatFlightTime(outbound?.arrivalTime || outbound?.segments?.[outbound?.segments?.length - 1]?.arrival?.at);
+  const returnDep = formatFlightTime(returnItin?.departureTime || returnItin?.segments?.[0]?.departure?.at);
+  const returnArr = formatFlightTime(returnItin?.arrivalTime || returnItin?.segments?.[returnItin?.segments?.length - 1]?.arrival?.at);
+
+  const outboundCarrier = activeOffer.airline?.name || airline || 'Airline';
+  const outboundFlightNo = activeOffer.flightNumber || flightNumber || '';
+  const outboundAircraft = outbound?.segments?.[0]?.aircraft || null;
+
+  // Case 1: Cash-only GDS response (Live or Fixture) without award inventory
+  if (isCashOnly || (!isDemo && (!hack.offers?.pointsRequired || !hack.awardInventory?.available))) {
     return (
       <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden transition-all">
-        {/* Header Notice Banner */}
-        <div className="bg-[#087E8B]/10 border-b border-[#087E8B]/20 px-4 py-2.5 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-[#073B68]">
-            <Radio className="w-4 h-4 text-[#087E8B] shrink-0 animate-pulse" />
-            <span className="font-bold">Live Flight API Offer (Amadeus GDS)</span>
-            <span className="hidden md:inline text-slate-600">
-              — Verified real-world airline pricing. Award seats require partner integration.
-            </span>
+        {/* Header Notice Banner with Honest Data-Source Labeling */}
+        <div
+          className={`px-4 py-2.5 flex items-center justify-between text-xs border-b ${
+            dataSource === 'live'
+              ? 'bg-emerald-50/80 border-emerald-200/80 text-emerald-900'
+              : 'bg-blue-50/80 border-blue-200/80 text-blue-950'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {dataSource === 'live' ? (
+              <>
+                <Radio className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
+                <span className="font-bold">Live Flight API Offer (Amadeus GDS)</span>
+                <span className="hidden md:inline text-emerald-800">
+                  — Real-world GDS airline pricing. Award seats require loyalty partner integration.
+                </span>
+              </>
+            ) : (
+              <>
+                <Layers className="w-4 h-4 text-[#0B347D] shrink-0" />
+                <span className="font-bold">Sample GDS Benchmark (Test Fixture Data)</span>
+                <span className="hidden md:inline text-slate-600">
+                  — Documented Amadeus test fixture. Configure live API credentials to query real-time flights.
+                </span>
+              </>
+            )}
           </div>
 
           <button
@@ -108,7 +156,28 @@ export function SavingsHeroCard({
         </div>
 
         <div className="p-5 sm:p-7 space-y-6">
-          {/* Route & Airline */}
+          {/* Multiple Offers Selector if returned by provider */}
+          {allOffers && allOffers.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-100 text-xs">
+              <span className="text-slate-500 font-semibold shrink-0">Available Options:</span>
+              {allOffers.map((offer, idx) => (
+                <button
+                  key={offer.id || idx}
+                  type="button"
+                  onClick={() => setSelectedOfferIndex(idx)}
+                  className={`px-3 py-1.5 rounded-lg font-bold shrink-0 transition-all ${
+                    selectedOfferIndex === idx
+                      ? 'bg-[#0B347D] text-white shadow-2xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {offer.airline?.name || offer.airline?.code || 'Flight'} • {formatEuro(offer.price?.total || 0)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Route & Primary Airline Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0B347D] to-[#087E8B] flex items-center justify-center text-white shadow-md shadow-[#0B347D]/15 shrink-0">
@@ -121,100 +190,149 @@ export function SavingsHeroCard({
                   <h3 className="text-xl sm:text-2xl font-bold text-[#073B68]">{destination}</h3>
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-slate-700">{airline}</span>
-                  <span>•</span>
-                  <span>{flightNumber}</span>
-                  <span>•</span>
-                  <span className="capitalize">{cabin?.replace('_', ' ')}</span>
-                  <span>•</span>
-                  <span>{outbound?.durationFormatted || 'Non-stop'}</span>
+                  <span className="font-semibold text-slate-700">{outboundCarrier}</span>
+                  {outboundFlightNo && <span>• {outboundFlightNo}</span>}
+                  {outboundAircraft && <span>• {outboundAircraft}</span>}
+                  <span>• <span className="capitalize">{cabin?.replace('_', ' ')}</span></span>
+                  <span>• {outbound?.stops === 0 ? 'Non-stop' : `${outbound?.stops} Stop(s)`}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex sm:flex-col items-center sm:items-end justify-between bg-slate-50 p-3 sm:p-0 rounded-xl">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Live GDS Fare
+                Total Price ({activePrice.currency || 'EUR'})
               </span>
               <span className="text-2xl sm:text-3xl font-extrabold text-[#0B347D]">
-                {formatEuro(price?.total || metrics?.totalCashPrice || 0)}
+                {formatEuro(activePrice.total || metrics?.totalCashPrice || 0)}
               </span>
             </div>
           </div>
 
-          {/* Side-by-side: Verified Cash Fare vs Award Status */}
+          {/* Side-by-side: Verified Flight Offer vs Award Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Live Cash Fare Card */}
+            
+            {/* Live/Fixture GDS Fare Card */}
             <div className="rounded-2xl border-2 border-[#0B347D] bg-white p-5 flex flex-col justify-between shadow-sm">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#0B347D] uppercase tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-[#087E8B]" /> Live Verified Cash Fare
+                    <ShieldCheck className="w-4 h-4 text-[#087E8B]" /> Verified Retail Cash Fare
                   </span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                    Active Flight Offer
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${dataSource === 'live' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {dataSource === 'live' ? 'Live Offer' : 'Test Fixture'}
                   </span>
                 </div>
 
+                {/* Price Display */}
                 <div>
-                  <p className="text-xs text-slate-500">Total for all travelers</p>
+                  <p className="text-xs text-slate-500">Total fare ({activePrice.currency || 'EUR'})</p>
                   <p className="text-3xl font-extrabold text-[#073B68] mt-0.5">
-                    {formatEuro(price?.total || metrics?.totalCashPrice || 0)}
+                    {formatEuro(activePrice.total || metrics?.totalCashPrice || 0)}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Per passenger: {formatEuro(price?.perTraveler || (price?.total / (price?.travelers || 1)) || 0)}
-                  </p>
+                  {activePrice.perTraveler && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Per passenger: {formatEuro(activePrice.perTraveler)}
+                    </p>
+                  )}
                 </div>
 
+                {/* Outbound Segment Details */}
+                {outbound && (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs text-slate-700">
+                    <div className="font-bold text-[#073B68] flex items-center justify-between">
+                      <span>Outbound Flight ({outbound.durationFormatted})</span>
+                      <span className="font-normal text-slate-500">{outbound.stops === 0 ? 'Direct' : `${outbound.stops} stop(s)`}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900">{outboundDep.time}</span> {outbound.origin} {outbound.segments?.[0]?.departure?.terminal && `(T${outbound.segments[0].departure.terminal})`}
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                      <div>
+                        <span className="font-bold text-slate-900">{outboundArr.time}</span> {outbound.destination} {outbound.segments?.[outbound.segments.length - 1]?.arrival?.terminal && `(T${outbound.segments[outbound.segments.length - 1].arrival.terminal})`}
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Dates: {outboundDep.date} → {outboundArr.date}
+                    </div>
+                  </div>
+                )}
+
+                {/* Return Segment Details (if round trip) */}
+                {returnItin && (
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs text-slate-700">
+                    <div className="font-bold text-[#073B68] flex items-center justify-between">
+                      <span>Return Flight ({returnItin.durationFormatted})</span>
+                      <span className="font-normal text-slate-500">{returnItin.stops === 0 ? 'Direct' : `${returnItin.stops} stop(s)`}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900">{returnDep.time}</span> {returnItin.origin} {returnItin.segments?.[0]?.departure?.terminal && `(T${returnItin.segments[0].departure.terminal})`}
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                      <div>
+                        <span className="font-bold text-slate-900">{returnArr.time}</span> {returnItin.destination} {returnItin.segments?.[returnItin.segments.length - 1]?.arrival?.terminal && `(T${returnItin.segments[returnItin.segments.length - 1].arrival.terminal})`}
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Dates: {returnDep.date} → {returnArr.date}
+                    </div>
+                  </div>
+                )}
+
+                {/* Base & Taxes breakdown (only when provided) */}
                 <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                  <div className="flex justify-between">
-                    <span>Base ticket fare:</span>
-                    <span className="font-semibold">{formatEuro(price?.base || 0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Taxes & carrier surcharges:</span>
-                    <span className="font-semibold">{formatEuro(price?.taxesAndFees || 0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Outbound Duration:</span>
-                    <span className="font-semibold">{outbound?.durationFormatted || 'Direct'}</span>
-                  </div>
-                  {returnItin && (
+                  {typeof activePrice.base === 'number' && activePrice.base > 0 && (
                     <div className="flex justify-between">
-                      <span>Return Duration:</span>
-                      <span className="font-semibold">{returnItin.durationFormatted}</span>
+                      <span>Base ticket fare:</span>
+                      <span className="font-semibold">{formatEuro(activePrice.base)}</span>
                     </div>
                   )}
+                  {typeof activePrice.taxesAndFees === 'number' && activePrice.taxesAndFees > 0 && (
+                    <div className="flex justify-between">
+                      <span>Taxes & carrier fees:</span>
+                      <span className="font-semibold">{formatEuro(activePrice.taxesAndFees)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Passengers:</span>
+                    <span className="font-semibold">{activeOffer.travelers || 1} Adult</span>
+                  </div>
                 </div>
               </div>
 
               <div className="mt-5 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span>Live fare retrieved directly from provider.</span>
+                <span>
+                  {dataSource === 'live'
+                    ? 'Retrieved via live GDS connection.'
+                    : 'Verified sample fixture from Amadeus Flight Offers API.'}
+                </span>
               </div>
             </div>
 
-            {/* Award Points Status Card */}
+            {/* Award Points Status Card (Honest Unavailable State) */}
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Award Travel Status
+                    Award Seat Inventory Status
                   </span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
-                    Partner Access Pending
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Unsupported
                   </span>
                 </div>
 
                 <div className="space-y-2 py-2">
                   <h4 className="text-sm font-bold text-slate-800">
-                    Live Award Availability Not Connected
+                    Live Award Flight Availability Not Connected
                   </h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Per travel hacking integrity standards, speculative award savings are never invented without direct loyalty inventory access.
+                    Per Phase 6 financial integrity standards, speculative award savings or fake hacked prices are never shown without direct, verified award-seat inventory.
                   </p>
                   <p className="text-xs text-slate-500">
-                    Switch to Demo Mode to view how award sweet spots operate for routes like this.
+                    Switch to Demo Mode to view illustrative sweet-spot award transfers and points math for popular routes.
                   </p>
                 </div>
               </div>
@@ -227,11 +345,12 @@ export function SavingsHeroCard({
                     className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#087E8B] hover:bg-[#06646f] text-white flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
-                    <span>View Illustrative Hack in Demo Mode</span>
+                    <span>Explore Travel Hack in Demo Mode</span>
                   </button>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </div>

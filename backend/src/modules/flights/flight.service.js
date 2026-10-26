@@ -10,8 +10,8 @@ export class FlightService {
     this.providerName = env.FLIGHT_PROVIDER;
   }
 
-  getActiveProvider() {
-    if (this.providerName === 'mock') {
+  getActiveProvider(requestedProvider) {
+    if (requestedProvider === 'mock' || this.providerName === 'mock') {
       return mockFlightAdapter;
     }
 
@@ -19,16 +19,14 @@ export class FlightService {
       return amadeusAdapter;
     }
 
-    // In development or test, fall back to mock adapter with explicit metadata indicator
-    if (env.NODE_ENV !== 'production') {
-      logger.warn('Amadeus credentials not configured. Using mock fixture provider for development.');
-      return mockFlightAdapter;
-    }
-
-    throw new Error('No live flight provider credentials configured. Please configure AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET.');
+    throw new Error(
+      'Live flight search is unavailable because Amadeus API credentials are not configured. Configure AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET in backend/.env, or switch to Demo Mode to explore sample flight hacks.'
+    );
   }
 
   async searchFlights(searchParams, { signal } = {}) {
+    const effectiveProvider = searchParams.provider || this.providerName;
+
     // 1. Generate cache key
     const cacheKey = flightCache.generateKey('flight-search', {
       origin: searchParams.origin,
@@ -38,6 +36,7 @@ export class FlightService {
       travelers: searchParams.travelers,
       cabin: searchParams.cabin,
       currency: searchParams.currency,
+      provider: effectiveProvider,
     });
 
     // 2. Check cache
@@ -53,8 +52,8 @@ export class FlightService {
       };
     }
 
-    // 3. Select active provider
-    const provider = this.getActiveProvider();
+    // 3. Select active provider (throws if credentials missing for live)
+    const provider = this.getActiveProvider(searchParams.provider);
 
     // 4. Query provider
     const searchResult = await provider.search(searchParams, { signal });
