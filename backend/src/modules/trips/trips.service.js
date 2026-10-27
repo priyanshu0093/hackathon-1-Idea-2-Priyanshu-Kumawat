@@ -35,8 +35,8 @@ export class TripsService {
       throw new AppError(`Trip with ID '${id}' not found`, 404, 'NOT_FOUND');
     }
 
-    // Protect private records
-    if (trip.userId && userId && trip.userId !== userId) {
+    // Protect private records: if trip is owned by a user, caller must be that user
+    if (trip.userId && trip.userId !== userId) {
       throw new AppError('Access denied. You do not own this trip.', 403, 'FORBIDDEN');
     }
 
@@ -89,7 +89,7 @@ export class TripsService {
       throw new AppError(`Trip with ID '${id}' not found`, 404, 'NOT_FOUND');
     }
 
-    if (trip.userId && userId && trip.userId !== userId) {
+    if (trip.userId && trip.userId !== userId) {
       throw new AppError('Access denied. You cannot delete a trip owned by another user.', 403, 'FORBIDDEN');
     }
 

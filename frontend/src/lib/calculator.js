@@ -130,3 +130,75 @@ export function calculateSavings({
     calculatedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Phase 14: Pure Smart Savings Engine
+ * 
+ * cash_savings = cash_fare - award_taxes_and_fees - value_of_points_used
+ * value_of_points_used = points_required * user_configured_value_per_point
+ * savings_percentage = (cash_savings / cash_fare) * 100
+ * value_per_point = (cash_fare - award_taxes_and_fees) / points_required
+ */
+export function calculateSmartSavings(input) {
+  if (!input || typeof input !== 'object') {
+    return { canCalculate: false, reason: 'Missing input parameters.' };
+  }
+
+  const cashFare = Number(input.cashFare);
+  const pointsRequired = Number(input.pointsRequired);
+  const awardTaxesAndFees = Number(input.awardTaxesAndFees ?? 0);
+  const cashCurrency = (input.cashCurrency || 'EUR').toUpperCase();
+  const awardCurrency = (input.awardCurrency || cashCurrency).toUpperCase();
+  const userConfiguredValuePerPoint = Number(input.userConfiguredValuePerPoint ?? 0.013);
+  const userBalance = Number(input.userPointsBalance ?? 0);
+
+  if (isNaN(cashFare) || cashFare <= 0) {
+    return { canCalculate: false, reason: 'Valid cash fare greater than 0 is required.' };
+  }
+  if (isNaN(pointsRequired) || pointsRequired <= 0) {
+    return { canCalculate: false, reason: 'Points required must be greater than 0.' };
+  }
+  if (isNaN(awardTaxesAndFees) || awardTaxesAndFees < 0) {
+    return { canCalculate: false, reason: 'Award taxes and fees cannot be negative.' };
+  }
+  if (isNaN(userConfiguredValuePerPoint) || userConfiguredValuePerPoint <= 0) {
+    return { canCalculate: false, reason: 'Point valuation must be greater than 0.' };
+  }
+  if (cashCurrency !== awardCurrency) {
+    return {
+      canCalculate: false,
+      reason: `Currency mismatch between cash fare (${cashCurrency}) and award taxes (${awardCurrency}).`,
+    };
+  }
+
+  const valueOfPointsUsed = Number((pointsRequired * userConfiguredValuePerPoint).toFixed(2));
+  const cashSavings = Number((cashFare - awardTaxesAndFees - valueOfPointsUsed).toFixed(2));
+  const savingsPercentage = Number(((cashSavings / cashFare) * 100).toFixed(1));
+  const netCashOffset = cashFare - awardTaxesAndFees;
+  const valuePerPoint = Number((netCashOffset / pointsRequired).toFixed(5));
+  const valuePerPointCents = Number((valuePerPoint * 100).toFixed(2));
+  const valuationCents = Number((userConfiguredValuePerPoint * 100).toFixed(2));
+  const isAwardCheaper = cashSavings > 0;
+  const pointsShortfall = Math.max(0, pointsRequired - userBalance);
+
+  return {
+    canCalculate: true,
+    currency: cashCurrency,
+    cashFare,
+    awardTaxesAndFees,
+    pointsRequired,
+    userConfiguredValuePerPoint,
+    valuationCents,
+    valueOfPointsUsed,
+    cashSavings,
+    savingsPercentage,
+    valuePerPoint,
+    valuePerPointCents,
+    isAwardCheaper,
+    userPointsBalance: userBalance,
+    pointsShortfall,
+    loyaltyProgram: input.loyaltyProgram || 'Loyalty Program',
+    calculatedAt: new Date().toISOString(),
+  };
+}
+

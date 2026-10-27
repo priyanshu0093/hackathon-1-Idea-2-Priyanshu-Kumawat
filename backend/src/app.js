@@ -8,6 +8,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { flightCache } from './utils/cache.js';
 import { amadeusAdapter } from './providers/amadeus/amadeus.adapter.js';
+import { duffelAdapter } from './providers/duffel/duffel.adapter.js';
 import { awardProviderAdapter } from './providers/award/awardProvider.adapter.js';
 
 import flightRoutes from './modules/flights/flight.routes.js';
@@ -75,8 +76,12 @@ app.get('/api/v1/health', (req, res) => {
     providers: {
       cashFlightProvider: {
         name: env.FLIGHT_PROVIDER,
-        configured: env.FLIGHT_PROVIDER === 'mock' || amadeusAdapter.isConfigured(),
-        environment: env.AMADEUS_ENV,
+        configured:
+          env.FLIGHT_PROVIDER === 'mock' ||
+          (env.FLIGHT_PROVIDER === 'duffel'
+            ? duffelAdapter.isConfigured()
+            : amadeusAdapter.isConfigured()),
+        environment: env.FLIGHT_PROVIDER === 'duffel' ? 'live' : env.AMADEUS_ENV,
       },
       awardInventoryProvider: {
         name: 'seats.aero / partner',

@@ -1,10 +1,10 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, isNull, desc } from 'drizzle-orm';
 import { getDb } from '../../config/database.js';
 import { savedTrips } from '../../db/schema.js';
 
 export class TripsRepository {
   /**
-   * Fetch saved trips, optionally filtered by authenticated user
+   * Fetch saved trips, strictly filtered by authenticated user or anonymous-only
    */
   async findAll(userId = null) {
     const db = getDb();
@@ -20,9 +20,11 @@ export class TripsRepository {
         .orderBy(desc(savedTrips.createdAt));
     }
 
+    // Unauthenticated: only return anonymous trips (userId IS NULL), preventing cross-user data leaks
     return await db
       .select()
       .from(savedTrips)
+      .where(isNull(savedTrips.userId))
       .orderBy(desc(savedTrips.createdAt));
   }
 

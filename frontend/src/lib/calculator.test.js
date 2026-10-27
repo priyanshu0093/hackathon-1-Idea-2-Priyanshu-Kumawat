@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSavings, DEFAULT_POINT_VALUATION_CENTS } from './calculator';
+import { calculateSavings, calculateSmartSavings, DEFAULT_POINT_VALUATION_CENTS } from './calculator';
 
 describe('calculateSavings', () => {
   it('correctly calculates net monetary savings and accounts for award taxes and fees', () => {
@@ -129,3 +129,43 @@ describe('calculateSavings', () => {
     expect(verifiedResult.isVerifiedPrice).toBe(true);
   });
 });
+
+describe('calculateSmartSavings (Phase 14 Specification)', () => {
+  it('implements mandated cash_savings, value_of_points, percentage and value_per_point formulas', () => {
+    // cash_fare = 415, points = 17000, taxes = 65, valuation = 0.013
+    // value_of_points = 17000 * 0.013 = 221
+    // cash_savings = 415 - 65 - 221 = 129
+    // savings_percentage = (129 / 415) * 100 = 31.1%
+    // value_per_point = (415 - 65) / 17000 = 350 / 17000 = 0.020588 -> 2.06 cents
+    const res = calculateSmartSavings({
+      cashFare: 415,
+      pointsRequired: 17000,
+      awardTaxesAndFees: 65,
+      userConfiguredValuePerPoint: 0.013,
+      loyaltyProgram: 'British Airways Executive Club',
+    });
+
+    expect(res.canCalculate).toBe(true);
+    expect(res.cashSavings).toBe(129);
+    expect(res.valueOfPointsUsed).toBe(221);
+    expect(res.savingsPercentage).toBe(31.1);
+    expect(res.valuePerPointCents).toBe(2.06);
+    expect(res.isAwardCheaper).toBe(true);
+  });
+
+  it('rejects zero points and invalid inputs', () => {
+    expect(calculateSmartSavings({ cashFare: 500, pointsRequired: 0 }).canCalculate).toBe(false);
+    expect(calculateSmartSavings({ cashFare: -500, pointsRequired: 10000 }).canCalculate).toBe(false);
+    expect(calculateSmartSavings({ cashFare: 500, pointsRequired: 10000, awardTaxesAndFees: -10 }).canCalculate).toBe(false);
+  });
+
+  it('rejects currency mismatch', () => {
+    expect(calculateSmartSavings({
+      cashFare: 500,
+      cashCurrency: 'EUR',
+      pointsRequired: 10000,
+      awardCurrency: 'USD',
+    }).canCalculate).toBe(false);
+  });
+});
+

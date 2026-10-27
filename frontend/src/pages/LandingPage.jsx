@@ -12,6 +12,7 @@ import { BookingGuideModal } from '../features/savings/BookingGuideModal';
 import { SavedTripsModal } from '../components/common/SavedTripsModal';
 import { SignInModal } from '../components/common/SignInModal';
 import { TravelDashboardModal } from '../features/dashboard/TravelDashboardModal';
+import { RedemptionPlannerModal } from '../features/savings/RedemptionPlannerModal';
 
 import { useFlightSearch } from '../hooks/useFlightSearch';
 import { useSavedTrips } from '../hooks/useSavedTrips';
@@ -52,6 +53,8 @@ export function LandingPage() {
   const [isSavedTripsOpen, setIsSavedTripsOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isRedemptionPlannerOpen, setIsRedemptionPlannerOpen] = useState(false);
+  const [redemptionFlightOffer, setRedemptionFlightOffer] = useState(null);
 
   const isCurrentTripSaved = isTripSaved(searchResult);
 
@@ -195,6 +198,10 @@ export function LandingPage() {
                 onOpenBookingGuide={() => setIsBookingGuideOpen(true)}
                 formData={formData}
                 onSwitchToDemo={switchToDemo}
+                onOpenRedemptionPlanner={(offer) => {
+                  setRedemptionFlightOffer(offer || searchResult);
+                  setIsRedemptionPlannerOpen(true);
+                }}
               />
 
               {searchResult && (
@@ -246,6 +253,13 @@ export function LandingPage() {
         onClose={() => setIsDashboardOpen(false)}
         savedTrips={savedTrips}
         onSelectTrip={applyPresetRoute}
+      />
+
+      <RedemptionPlannerModal
+        isOpen={isRedemptionPlannerOpen}
+        onClose={() => setIsRedemptionPlannerOpen(false)}
+        flightOffer={redemptionFlightOffer || searchResult}
+        onOpenSignIn={() => setIsSignInOpen(true)}
       />
     </div>
   );

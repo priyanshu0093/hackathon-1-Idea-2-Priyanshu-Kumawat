@@ -13,7 +13,8 @@ import {
   Clock,
   ShieldCheck,
   AlertCircle,
-  Layers
+  Layers,
+  Calculator
 } from 'lucide-react';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 import { PointsShortfallCard } from './PointsShortfallCard';
@@ -38,6 +39,7 @@ export function SavingsHeroCard({
   onOpenBookingGuide,
   formData,
   onSwitchToDemo,
+  onOpenRedemptionPlanner,
 }) {
   const [activeTab, setActiveTab] = useState('best_value');
   const [selectedOfferIndex, setSelectedOfferIndex] = useState(0);
@@ -337,18 +339,29 @@ export function SavingsHeroCard({
                 </div>
               </div>
 
-              {onSwitchToDemo && (
-                <div className="mt-4 pt-3 border-t border-slate-200">
+              <div className="mt-4 pt-3 border-t border-slate-200 space-y-2">
+                {onOpenRedemptionPlanner && (
+                  <button
+                    type="button"
+                    id="open-redemption-planner-btn"
+                    onClick={() => onOpenRedemptionPlanner(activeOffer)}
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#0B347D] hover:bg-[#073B68] text-white flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <Calculator className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>Plan Award Redemption & Savings</span>
+                  </button>
+                )}
+                {onSwitchToDemo && (
                   <button
                     type="button"
                     onClick={onSwitchToDemo}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#087E8B] hover:bg-[#06646f] text-white flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                    className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
-                    <span>Explore Travel Hack in Demo Mode</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Or Explore Illustrative Demo Sweet Spots</span>
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
           </div>
@@ -643,6 +656,17 @@ export function SavingsHeroCard({
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            {onOpenRedemptionPlanner && (
+              <button
+                type="button"
+                id="custom-redemption-planner-btn"
+                onClick={() => onOpenRedemptionPlanner(hack)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white border border-slate-200 text-[#073B68] hover:border-slate-300 flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+              >
+                <Calculator className="w-3.5 h-3.5 text-[#0B347D]" />
+                <span>Custom Redemption Planner</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={onOpenBookingGuide}

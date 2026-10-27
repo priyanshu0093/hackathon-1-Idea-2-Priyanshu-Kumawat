@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plane, Bookmark, Menu, X, Sparkles, User, Globe } from 'lucide-react';
+import { Plane, Bookmark, Menu, X, Sparkles, User } from 'lucide-react';
 
 export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -68,28 +68,6 @@ export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn }) {
 
           {/* Action buttons */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Currency / Region */}
-            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200/80 transition-colors cursor-pointer">
-              <Globe className="w-3.5 h-3.5 text-slate-500" />
-              <span>EUR (€)</span>
-            </div>
-
-            {/* Saved Trips Button */}
-            <button
-              onClick={onOpenSavedTrips}
-              id="saved-trips-btn"
-              className="relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-[#0B347D] transition-colors border border-slate-200/90"
-              aria-label={`Saved Trips: ${savedCount} items`}
-            >
-              <Bookmark className="w-4 h-4 text-[#0B347D]" />
-              <span>Saved</span>
-              {savedCount > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-[#0B347D] text-white">
-                  {savedCount}
-                </span>
-              )}
-            </button>
-
             {/* Sign in / Account */}
             <button
               onClick={onOpenSignIn}
@@ -103,19 +81,6 @@ export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn }) {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
-            <button
-              onClick={onOpenSavedTrips}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 relative"
-              aria-label="View Saved Trips"
-            >
-              <Bookmark className="w-5 h-5 text-[#0B347D]" />
-              {savedCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-[#0B347D] text-white rounded-full text-[10px] flex items-center justify-center font-bold">
-                  {savedCount}
-                </span>
-              )}
-            </button>
-
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none"

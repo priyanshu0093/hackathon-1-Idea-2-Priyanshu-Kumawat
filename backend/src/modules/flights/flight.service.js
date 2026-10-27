@@ -1,4 +1,5 @@
 import { env } from '../../config/env.js';
+import { duffelAdapter } from '../../providers/duffel/duffel.adapter.js';
 import { amadeusAdapter } from '../../providers/amadeus/amadeus.adapter.js';
 import { mockFlightAdapter } from '../../providers/mock/mock.adapter.js';
 import { awardProviderAdapter } from '../../providers/award/awardProvider.adapter.js';
@@ -10,22 +11,52 @@ export class FlightService {
     this.providerName = env.FLIGHT_PROVIDER;
   }
 
-  getActiveProvider(requestedProvider) {
-    if (requestedProvider === 'mock' || this.providerName === 'mock') {
+  getActiveProvider(requestedProvider, isDemo = false) {
+    if (isDemo || requestedProvider === 'mock' || requestedProvider === 'demo' || this.providerName === 'mock') {
       return mockFlightAdapter;
     }
 
+    // If caller explicitly requested a specific provider, strictly honor it
+    if (requestedProvider === 'duffel') {
+      if (duffelAdapter.isConfigured()) {
+        return duffelAdapter;
+      }
+      throw new Error(
+        'Live flight search is unavailable because Duffel API credentials are not configured. Configure DUFFEL_ACCESS_TOKEN in backend/.env, or switch to Demo Mode to explore sample flight hacks.'
+      );
+    }
+
+    if (requestedProvider === 'amadeus') {
+      if (amadeusAdapter.isConfigured()) {
+        return amadeusAdapter;
+      }
+      throw new Error(
+        'Live flight search is unavailable because Amadeus API credentials are not configured. Configure AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET in backend/.env, or switch to Demo Mode to explore sample flight hacks.'
+      );
+    }
+
+    // Default provider selection
+    if (this.providerName === 'duffel' && duffelAdapter.isConfigured()) {
+      return duffelAdapter;
+    }
+    if (this.providerName === 'amadeus' && amadeusAdapter.isConfigured()) {
+      return amadeusAdapter;
+    }
+    if (duffelAdapter.isConfigured()) {
+      return duffelAdapter;
+    }
     if (amadeusAdapter.isConfigured()) {
       return amadeusAdapter;
     }
 
     throw new Error(
-      'Live flight search is unavailable because Amadeus API credentials are not configured. Configure AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET in backend/.env, or switch to Demo Mode to explore sample flight hacks.'
+      'Live flight search is unavailable because no live flight provider (Duffel or Amadeus) is configured. Please configure DUFFEL_ACCESS_TOKEN in backend/.env, or switch to Demo Mode to explore sample flight hacks.'
     );
   }
 
   async searchFlights(searchParams, { signal } = {}) {
-    const effectiveProvider = searchParams.provider || this.providerName;
+    const isDemo = searchParams.demo === true || searchParams.provider === 'demo' || searchParams.provider === 'mock';
+    const effectiveProvider = isDemo ? 'mock' : (searchParams.provider || this.providerName);
 
     // 1. Generate cache key
     const cacheKey = flightCache.generateKey('flight-search', {
@@ -53,10 +84,13 @@ export class FlightService {
     }
 
     // 3. Select active provider (throws if credentials missing for live)
-    const provider = this.getActiveProvider(searchParams.provider);
+    const provider = this.getActiveProvider(searchParams.provider, isDemo);
 
     // 4. Query provider
     const searchResult = await provider.search(searchParams, { signal });
+    if (isDemo && searchResult?.meta) {
+      searchResult.meta.dataSource = 'demo';
+    }
 
     // 5. Query award inventory status (Section 6)
     const awardStatus = await awardProviderAdapter.searchAwardAvailability(searchParams);

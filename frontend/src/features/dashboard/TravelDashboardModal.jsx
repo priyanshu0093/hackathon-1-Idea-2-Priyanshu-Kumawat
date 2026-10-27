@@ -773,6 +773,11 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
                             <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                               {trip.cabin}
                             </span>
+                            {(trip.dataSource === 'user_redemption_estimate' || trip.metadata?.isRedemptionPlan) && (
+                              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800">
+                                User Plan {trip.metadata?.valuePerPointCents ? `(${trip.metadata.valuePerPointCents}¢/pt)` : ''}
+                              </span>
+                            )}
                             <span className="text-xs text-slate-500">
                               {trip.carrier || 'Airline Partner'}
                             </span>
