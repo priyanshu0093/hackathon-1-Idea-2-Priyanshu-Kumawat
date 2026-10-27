@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Shield, ArrowUpRight, TrendingDown } from 'lucide-react';
+import { Sparkles, Shield, TrendingDown } from 'lucide-react';
 
 export function HeroSection() {
   return (

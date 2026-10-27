@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, ArrowRight, Sparkles, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { CURATED_HACKS } from '../../data/sampleHacks';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 

@@ -2,6 +2,21 @@ import React from 'react';
 import { X, ExternalLink, AlertTriangle, ShieldCheck, Sparkles, Coins } from 'lucide-react';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 
+function getAirlineOfficialUrl(airlineName, programName) {
+  const normalized = `${airlineName || ''} ${programName || ''}`.toLowerCase();
+  if (normalized.includes('iberia')) return 'https://www.iberia.com';
+  if (normalized.includes('british') || normalized.includes('ba ')) return 'https://www.britishairways.com';
+  if (normalized.includes('air france') || normalized.includes('klm') || normalized.includes('flying blue')) return 'https://www.flyingblue.com';
+  if (normalized.includes('air india')) return 'https://www.airindia.com';
+  if (normalized.includes('qatar')) return 'https://www.qatarairways.com';
+  if (normalized.includes('emirates')) return 'https://www.emirates.com';
+  if (normalized.includes('united')) return 'https://www.united.com';
+  if (normalized.includes('american')) return 'https://www.aa.com';
+  if (normalized.includes('delta')) return 'https://www.delta.com';
+  if (normalized.includes('virgin')) return 'https://www.virginatlantic.com';
+  return 'https://www.google.com/travel/flights';
+}
+
 export function BookingGuideModal({ hack, isOpen, onClose }) {
   if (!isOpen || !hack) return null;
 
@@ -14,6 +29,8 @@ export function BookingGuideModal({ hack, isOpen, onClose }) {
     programName,
     bookingSteps = [],
   } = hack;
+
+  const portalUrl = hack.bookingUrl || getAirlineOfficialUrl(airline, programName);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -111,7 +128,7 @@ export function BookingGuideModal({ hack, isOpen, onClose }) {
           {/* Educational Note */}
           <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
             <ShieldCheck className="w-4 h-4 text-[#087E8B]" />
-            <span>Illustrative educational demo data. Live seat booking occurs directly on official airline portals.</span>
+            <span>Independent travel intelligence. All flight bookings and point transfers occur directly on official airline portals.</span>
           </div>
         </div>
 
@@ -128,15 +145,15 @@ export function BookingGuideModal({ hack, isOpen, onClose }) {
             >
               Close
             </button>
-            <button
-              onClick={() => {
-                alert(`In Phase 3, this will deep-link directly to the ${airline} award portal with flight dates pre-filled.`);
-              }}
+            <a
+              href={portalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold bg-[#0B347D] hover:bg-[#073B68] text-white flex items-center justify-center gap-1.5 shadow-xs transition-colors"
             >
-              <span>Go to Airline Portal</span>
+              <span>Visit Official Airline Site</span>
               <ExternalLink className="w-3.5 h-3.5" />
-            </button>
+            </a>
           </div>
         </div>
 

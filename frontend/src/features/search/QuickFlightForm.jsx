@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeftRight, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeftRight, Sparkles } from 'lucide-react';
 import { AirportSelect } from './AirportSelect';
 import { TravelersSelector } from './TravelersSelector';
 import { PointsInput } from './PointsInput';

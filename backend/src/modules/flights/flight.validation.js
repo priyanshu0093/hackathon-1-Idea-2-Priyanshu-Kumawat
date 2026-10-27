@@ -28,7 +28,8 @@ export const flightSearchSchema = z
     cabin: z.enum(['economy', 'premium_economy', 'business', 'first']).default('economy'),
     currency: z.string().trim().toUpperCase().length(3).default('EUR'),
     maxOffers: z.coerce.number().int().min(1).max(20).default(10),
-    provider: z.enum(['amadeus', 'mock']).optional(),
+    provider: z.enum(['amadeus', 'duffel', 'mock', 'demo']).optional(),
+    demo: z.boolean().optional(),
   })
   .refine((data) => data.origin !== data.destination, {
     message: 'Origin and destination airports cannot be identical',

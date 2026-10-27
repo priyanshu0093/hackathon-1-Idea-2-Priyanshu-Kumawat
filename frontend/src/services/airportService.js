@@ -2,7 +2,11 @@ import { API_CONFIG } from './apiConfig';
 import { AIRPORTS } from '../data/airports';
 
 // In-memory query cache to avoid redundant API hits for recent queries
-const airportCache = new Map();
+export const airportCache = new Map();
+
+export function clearAirportCache() {
+  airportCache.clear();
+}
 
 /**
  * Searches airports from backend API with fallback to local curated data

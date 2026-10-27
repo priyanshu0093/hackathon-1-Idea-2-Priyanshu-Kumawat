@@ -8,24 +8,45 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { flightCache } from './utils/cache.js';
 import { amadeusAdapter } from './providers/amadeus/amadeus.adapter.js';
+import { duffelAdapter } from './providers/duffel/duffel.adapter.js';
 import { awardProviderAdapter } from './providers/award/awardProvider.adapter.js';
 
 import flightRoutes from './modules/flights/flight.routes.js';
 import savingsRoutes from './modules/savings/savings.routes.js';
 import airportRoutes from './modules/airports/airport.routes.js';
 import advisorRoutes from './modules/advisor/advisor.routes.js';
+import tripsRoutes from './modules/trips/trips.routes.js';
+import authRoutes from './modules/auth/auth.routes.js';
+import walletRoutes from './modules/wallet/wallet.routes.js';
+import forecastRoutes from './modules/forecast/forecast.routes.js';
+import bookingRoutes from './modules/bookings/booking.routes.js';
 
 const app = express();
 
 // Security headers
 app.use(helmet());
 
+const isProduction = env.NODE_ENV === 'production';
+const allowedOrigins = env.FRONTEND_URL
+  ? env.FRONTEND_URL.split(',').map((url) => url.trim().replace(/\/+$/, ''))
+  : [];
+
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow browser requests, local frontend, or server-to-server calls without origin header
-      callback(null, true);
+      // Allow non-browser or local server-to-server calls without origin header
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (!isProduction) {
+        return callback(null, true);
+      }
+      const normalizedOrigin = origin.replace(/\/+$/, '');
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} is not allowed by CORS.`));
     },
     credentials: true,
   })
@@ -48,13 +69,19 @@ app.get('/api/v1/health', (req, res) => {
     environment: env.NODE_ENV,
     database: {
       connected: isDbConnected(),
-      mode: isDbConnected() ? 'mongodb' : 'in-memory',
+      dialect: 'postgresql',
+      provider: 'supabase',
+      mode: isDbConnected() ? 'postgresql' : 'disconnected',
     },
     providers: {
       cashFlightProvider: {
         name: env.FLIGHT_PROVIDER,
-        configured: env.FLIGHT_PROVIDER === 'mock' || amadeusAdapter.isConfigured(),
-        environment: env.AMADEUS_ENV,
+        configured:
+          env.FLIGHT_PROVIDER === 'mock' ||
+          (env.FLIGHT_PROVIDER === 'duffel'
+            ? duffelAdapter.isConfigured()
+            : amadeusAdapter.isConfigured()),
+        environment: env.FLIGHT_PROVIDER === 'duffel' ? 'live' : env.AMADEUS_ENV,
       },
       awardInventoryProvider: {
         name: 'seats.aero / partner',
@@ -77,6 +104,11 @@ app.use('/api/v1/flights', flightRoutes);
 app.use('/api/v1/savings', savingsRoutes);
 app.use('/api/v1/airports', airportRoutes);
 app.use('/api/v1/advisor', advisorRoutes);
+app.use('/api/v1/trips', tripsRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+app.use('/api/v1/forecast', forecastRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);

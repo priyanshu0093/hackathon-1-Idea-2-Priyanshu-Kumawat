@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coins, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Coins, AlertCircle, CheckCircle } from 'lucide-react';
 import { formatPoints, formatEuro } from '../../lib/formatters';
 
 export function PointsShortfallCard({ metrics, programName }) {

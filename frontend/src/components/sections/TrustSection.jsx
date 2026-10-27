@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Calculator, Landmark, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Calculator, Landmark } from 'lucide-react';
 
 export function TrustSection() {
   return (

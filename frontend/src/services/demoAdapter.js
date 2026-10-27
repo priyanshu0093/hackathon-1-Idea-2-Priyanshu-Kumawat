@@ -48,13 +48,7 @@ export async function searchFlightsDemo(searchParams, { signal } = {}) {
     (h) => h.origin === origin && h.destination === destination
   );
 
-  const cabinMultipliers = {
-    economy: 1.0,
-    premium_economy: 1.5,
-    business: 2.6,
-    first: 4.2,
-  };
-  const multiplier = cabinMultipliers[cabin] || 1.0;
+
 
   let baseCash = exactSweetSpot ? exactSweetSpot.normalCashPrice : 760;
   let basePoints = exactSweetSpot ? exactSweetSpot.awardPrice.pointsRequired : 23000;

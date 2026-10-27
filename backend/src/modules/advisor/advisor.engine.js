@@ -40,6 +40,7 @@ const AIRPORT_ALTERNATIVES = {
   ],
   DEL: [
     { code: 'BOM', name: 'Mumbai Chhatrapati Shivaji (BOM)', note: 'High frequency domestic shuttle; alternative gateway to Europe and the Middle East.' },
+    { code: 'BLR', name: 'Bengaluru Kempegowda (BLR)', note: 'South India tech hub with non-stop European connections (Air France, KLM, Lufthansa).' },
   ],
 };
 
@@ -109,6 +110,40 @@ function getRouteAwardBenchmark(origin, destination, cabin) {
       sweetSpotNote: 'Domestic Indian routes have aggressive cash competition. Fares under €60 are often cheaper in cash than spending transferable points.',
       transferPartners: [
         { bank: 'Axis Bank / HDFC SmartBuy / Amex India', ratio: 'Varies', transferTime: '1-3 days' },
+      ],
+    };
+  }
+
+  // Delhi <-> London Heathrow (DEL-LHR)
+  if (['DEL-LHR'].includes(pair)) {
+    return {
+      program: 'Virgin Atlantic Flying Club / British Airways Avios',
+      alliance: 'SkyTeam / oneworld',
+      offPeakAviosOneWay: cabin === 'business' ? 37500 : cabin === 'premium_economy' ? 22500 : 12500,
+      peakAviosOneWay: cabin === 'business' ? 57500 : cabin === 'premium_economy' ? 32500 : 22500,
+      estimatedTaxesOneWay: 145,
+      sweetSpotNote: 'Virgin Atlantic Flying Club offers one of the lowest points requirements between Delhi and London (12,500 points standard season), though UK APD departure fees apply.',
+      transferPartners: [
+        { bank: 'American Express Membership Rewards', ratio: '1:1', transferTime: 'Instant' },
+        { bank: 'Chase Ultimate Rewards', ratio: '1:1', transferTime: 'Instant' },
+        { bank: 'Capital One Miles', ratio: '1:1', transferTime: 'Instant' },
+      ],
+    };
+  }
+
+  // Mumbai <-> Dubai (BOM-DXB)
+  if (['BOM-DXB'].includes(pair)) {
+    return {
+      program: 'Emirates Skywards / British Airways Avios',
+      alliance: 'Independent / oneworld',
+      offPeakAviosOneWay: cabin === 'business' ? 25000 : 13500,
+      peakAviosOneWay: cabin === 'business' ? 35000 : 18500,
+      estimatedTaxesOneWay: 55,
+      sweetSpotNote: 'BOM-DXB is a high-frequency route under 1,200 miles. Short-haul redemptions offer good value when peak business fares spike above €500.',
+      transferPartners: [
+        { bank: 'American Express Membership Rewards', ratio: '1:1', transferTime: 'Instant' },
+        { bank: 'Chase Ultimate Rewards', ratio: '1:1', transferTime: 'Instant' },
+        { bank: 'Capital One Miles', ratio: '1:1', transferTime: 'Instant' },
       ],
     };
   }
@@ -295,7 +330,13 @@ export function generateAdvisorAdvice(input) {
   const facts = [
     `Verified cash fare: €${verifiedCashTotal} ${currency} total (${verifiedAirline}, ${cabin} class, ${travelers} traveler${travelers > 1 ? 's' : ''}).`,
     `Route: ${origin} → ${destination} (${isRoundTrip ? 'Round-trip' : 'One-way'}).`,
-    `Data benchmark source: ${dataSource === 'live' ? 'Live GDS Airline API (Amadeus)' : 'Sample GDS Fixture'}.`,
+    `Data benchmark source: ${
+      dataSource === 'live'
+        ? 'Live GDS Airline API (Amadeus)'
+        : dataSource === 'demo'
+        ? 'Illustrative Travel-Hacking Demo Benchmark'
+        : 'Sample GDS Fixture'
+    }.`,
     `Operating carrier: ${verifiedAirline}.`,
   ];
 

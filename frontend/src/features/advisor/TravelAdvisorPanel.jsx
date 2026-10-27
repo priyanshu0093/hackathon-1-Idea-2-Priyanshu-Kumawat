@@ -5,18 +5,13 @@ import {
   ShieldCheck,
   Calculator,
   AlertTriangle,
-  ArrowRight,
   Send,
   RotateCcw,
   Building2,
   Calendar,
   MapPin,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
-  HelpCircle,
-  Clock,
-  Layers,
   Coins
 } from 'lucide-react';
 import { formatEuro, formatPoints } from '../../lib/formatters';
@@ -84,7 +79,7 @@ export function TravelAdvisorPanel({ searchResult, formData, dataSourceMode }) {
         cashPrice: Number(cashPrice) || 600,
         currency: searchResult.price?.currency || 'EUR',
         airline: searchResult.airline || 'Airline',
-        dataSource: dataSourceMode || (searchResult.isDemo ? 'demo' : 'live'),
+        dataSource: searchResult.dataSource || (searchResult.isDemo ? 'demo' : (dataSourceMode || 'live')),
         pointsBalance: Number(formData?.pointsBalance) || 0,
         pointsProgram: formData?.pointsProgram || 'none',
         skipPoints: Boolean(formData?.skipPoints),

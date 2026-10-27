@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, Heart } from 'lucide-react';
+import { Plane } from 'lucide-react';
 
 
 export function Footer() {
