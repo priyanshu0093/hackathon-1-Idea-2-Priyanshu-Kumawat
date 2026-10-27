@@ -1,7 +1,7 @@
 import { API_CONFIG } from './apiConfig';
 
 function getAuthHeader() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('a_una_milla_token') || localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
