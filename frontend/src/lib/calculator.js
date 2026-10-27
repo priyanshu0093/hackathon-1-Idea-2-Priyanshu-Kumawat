@@ -198,6 +198,13 @@ export function calculateSmartSavings(input) {
     userPointsBalance: userBalance,
     pointsShortfall,
     loyaltyProgram: input.loyaltyProgram || 'Loyalty Program',
+    sourceType: input.sourceType || 'user_entered',
+    sourceLabel:
+      input.sourceType === 'verified_provider'
+        ? 'Verified Live Award Provider'
+        : input.sourceType === 'illustrative_demo'
+        ? 'Illustrative Benchmark'
+        : 'User-Provided Estimate',
     calculatedAt: new Date().toISOString(),
   };
 }

@@ -7,7 +7,7 @@ import { logger } from '../utils/logger.js';
 const { Pool } = pg;
 
 let pool = null;
-let db = null;
+export let db = null;
 let isConnected = false;
 
 /**

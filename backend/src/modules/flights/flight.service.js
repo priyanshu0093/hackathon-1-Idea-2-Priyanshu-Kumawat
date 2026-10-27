@@ -93,7 +93,15 @@ export class FlightService {
     }
 
     // 5. Query award inventory status (Section 6)
-    const awardStatus = await awardProviderAdapter.searchAwardAvailability(searchParams);
+    const isDemoAward = searchParams.demo === true || searchParams.provider === 'demo';
+    const awardStatus = await awardProviderAdapter.searchAwardAvailability({
+      origin: searchParams.origin,
+      destination: searchParams.destination,
+      departureDate: searchParams.departureDate,
+      cabin: searchParams.cabin,
+      travelers: searchParams.travelers,
+      demo: isDemoAward,
+    }, { signal });
 
     // 6. Assemble response
     const responsePayload = {

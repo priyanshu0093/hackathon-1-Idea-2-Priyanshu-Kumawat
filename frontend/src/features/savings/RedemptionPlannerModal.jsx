@@ -13,11 +13,13 @@ import {
   Info,
   Layers,
   Plane,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 import { calculateSmartSavings } from '../../lib/calculator';
 import { saveRedemptionPlanApi } from '../../services/redemptionService';
+import { fetchUserCards } from '../../services/cardWalletService';
 
 const POPULAR_PROGRAMS = [
   'Iberia Plus',
@@ -37,6 +39,7 @@ export function RedemptionPlannerModal({
   onClose,
   flightOffer,
   onOpenSignIn,
+  onOpenBookingModal,
 }) {
   const { user, isAuthenticated } = useAuth();
 
@@ -55,18 +58,49 @@ export function RedemptionPlannerModal({
   const returnDate = flightOffer?.returnDate || null;
   const dataSource = flightOffer?.dataSource || (flightOffer?.isDemo ? 'demo' : 'live');
 
+  // Genuine verified award offer from partner provider (Phase 15)
+  const verifiedAward = flightOffer?.verifiedAwardOffer || flightOffer?.awardInventory?.offers?.[0] || null;
+  const isVerifiedAward = Boolean(verifiedAward && verifiedAward.pointsRequired);
+
   // Planner inputs
-  const [selectedProgram, setSelectedProgram] = useState(POPULAR_PROGRAMS[0]);
-  const [pointsRequired, setPointsRequired] = useState('17000');
-  const [awardTaxes, setAwardTaxes] = useState('65');
+  const [selectedProgram, setSelectedProgram] = useState(
+    verifiedAward?.program?.name || POPULAR_PROGRAMS[0]
+  );
+  const [pointsRequired, setPointsRequired] = useState(
+    verifiedAward?.pointsRequired ? String(verifiedAward.pointsRequired) : '17000'
+  );
+  const [awardTaxes, setAwardTaxes] = useState(
+    verifiedAward?.taxesAndFees?.amount !== undefined ? String(verifiedAward.taxesAndFees.amount) : '65'
+  );
   const [valuationCents, setValuationCents] = useState(1.3);
   const [userBalance, setUserBalance] = useState('0');
   const [notes, setNotes] = useState('');
+  const [userCardGroups, setUserCardGroups] = useState([]);
+  const [totalCardPoints, setTotalCardPoints] = useState(0);
 
   // Save state
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
   const [saveErrorMsg, setSaveErrorMsg] = useState('');
+
+  // Fetch user's cards to offer quick balance autofill
+  useEffect(() => {
+    if (!isOpen || !isAuthenticated || !user?.id) {
+      setUserCardGroups([]);
+      setTotalCardPoints(0);
+      setUserBalance('0');
+      return;
+    }
+    fetchUserCards()
+      .then((data) => {
+        if (data?.currencyTotals) {
+          setUserCardGroups(data.currencyTotals);
+          const total = (data.cards || []).reduce((acc, c) => acc + (Number(c.demoBalance) || 0), 0);
+          setTotalCardPoints(total);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen, isAuthenticated, user?.id]);
 
   // Reactive Smart Savings calculation
   const calculation = calculateSmartSavings({
@@ -74,10 +108,11 @@ export function RedemptionPlannerModal({
     cashCurrency,
     pointsRequired: Number(pointsRequired),
     awardTaxesAndFees: Number(awardTaxes),
-    awardCurrency: cashCurrency,
+    awardCurrency: verifiedAward?.taxesAndFees?.currency || cashCurrency,
     userConfiguredValuePerPoint: Number(valuationCents) / 100,
     loyaltyProgram: selectedProgram,
     userPointsBalance: Number(userBalance),
+    sourceType: isVerifiedAward ? 'verified_provider' : 'user_entered',
   });
 
   useEffect(() => {
@@ -282,17 +317,81 @@ export function RedemptionPlannerModal({
 
                 {/* Current Program Balance */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Your Current Program Balance (Optional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Your Current Program Balance (Optional)
+                    </label>
+                    <span className="text-[10px] text-slate-400">Cards Wallet</span>
+                  </div>
                   <input
                     type="number"
                     min="0"
                     value={userBalance}
                     onChange={(e) => setUserBalance(e.target.value)}
                     placeholder="0"
-                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0B347D] outline-none"
+                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0B347D] outline-none font-semibold text-slate-800"
                   />
+
+                  {/* Card Wallet Points Quick Match & Total Apply */}
+                  {totalCardPoints > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {/* Program Specific Match */}
+                      {(() => {
+                        const match = userCardGroups.find((g) =>
+                          g.rewardsProgram.toLowerCase().includes(selectedProgram.toLowerCase()) ||
+                          selectedProgram.toLowerCase().includes(g.rewardsProgram.toLowerCase())
+                        );
+                        if (match && match.totalDemoPoints > 0) {
+                          return (
+                            <div className="flex items-center justify-between text-[11px] bg-cyan-50 border border-cyan-200 p-2 rounded-lg text-cyan-950">
+                              <span className="flex items-center gap-1 font-semibold text-slate-700">
+                                <CreditCard className="w-3.5 h-3.5 text-[#087E8B]" />
+                                {match.rewardsProgram}: {formatPoints(match.totalDemoPoints)} {match.currency}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setUserBalance(String(match.totalDemoPoints))}
+                                className="text-xs font-bold text-[#0B347D] hover:underline cursor-pointer"
+                              >
+                                Apply {formatPoints(match.totalDemoPoints)}
+                              </button>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {/* Apply Total Wallet Points Button */}
+                      <div className="flex items-center justify-between text-[11px] bg-emerald-50 border border-emerald-200 p-2 rounded-lg text-emerald-950">
+                        <span className="flex items-center gap-1 font-semibold text-emerald-900">
+                          <Coins className="w-3.5 h-3.5 text-emerald-700" />
+                          Total in Wallet: {formatPoints(totalCardPoints)} pts
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setUserBalance(String(totalCardPoints))}
+                          className="px-2 py-0.5 rounded bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] cursor-pointer shadow-2xs"
+                        >
+                          Use All Card Points
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shortfall or Sufficient points indicator */}
+                  {calculation.hasShortfall ? (
+                    <div className="mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>
+                        Shortfall: <strong>{formatPoints(calculation.pointsShortfall)}</strong> points needed to cover this award flight.
+                      </span>
+                    </div>
+                  ) : calculation.pointsRequired > 0 && Number(userBalance) >= calculation.pointsRequired ? (
+                    <div className="mt-1.5 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Your points balance fully covers this award flight requirement!</span>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Notes */}
@@ -315,15 +414,33 @@ export function RedemptionPlannerModal({
             <div className="lg:col-span-7 space-y-4">
               
               {/* Notice Banner */}
-              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <span className="font-bold block">User-Entered Estimate Disclosure</span>
-                  <p className="text-[11px] text-amber-800 leading-relaxed">
-                    Award requirements are self-reported estimates. A Una Milla never fabricates live award space; please verify saver seat availability on {selectedProgram}&apos;s official website before booking.
-                  </p>
+              {isVerifiedAward ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <span className="font-bold block flex items-center gap-1.5">
+                      <span>Verified Partner Award Availability</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-900 font-extrabold uppercase">
+                        {verifiedAward?.provider === 'mock' ? 'Verified Benchmark' : 'Live Seats.aero Feed'}
+                      </span>
+                    </span>
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                      Award requirements ({pointsRequired} pts + {awardTaxes} {cashCurrency}) retrieved from genuine partner inventory.
+                      {verifiedAward?.seatsAvailable ? ` ${verifiedAward.seatsAvailable} seats remaining.` : ''} Always confirm saver seat space directly on {selectedProgram}&apos;s portal before transferring credit card points.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <span className="font-bold block">User-Entered Estimate Disclosure</span>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Award requirements are self-reported estimates. A Una Milla never fabricates live award space; please verify saver seat availability on {selectedProgram}&apos;s official website before booking.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {!calculation.canCalculate ? (
                 <div className="p-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 text-center space-y-2">
@@ -504,6 +621,27 @@ export function RedemptionPlannerModal({
             >
               Close
             </button>
+
+            {onOpenBookingModal && (
+              <button
+                type="button"
+                id="planner-book-flight-btn"
+                onClick={() => {
+                  onClose();
+                  onOpenBookingModal({
+                    ...flightOffer,
+                    pointsCost: Number(pointsRequired),
+                    taxes: Number(awardTaxes),
+                    programName: selectedProgram,
+                    cashPrice: Number(cashFare),
+                  });
+                }}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#276955] hover:bg-[#1f5444] text-white shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Plane className="w-3.5 h-3.5 -rotate-45" />
+                <span>Book / Redeem Flight</span>
+              </button>
+            )}
 
             {isAuthenticated ? (
               <button

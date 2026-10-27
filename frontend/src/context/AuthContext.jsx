@@ -23,11 +23,13 @@ export function AuthProvider({ children }) {
           setUser(response.data.user);
         } else {
           localStorage.removeItem('a_una_milla_token');
+          localStorage.removeItem('a_una_milla_saved_trips');
           setToken(null);
           setUser(null);
         }
       } catch {
         localStorage.removeItem('a_una_milla_token');
+        localStorage.removeItem('a_una_milla_saved_trips');
         setToken(null);
         setUser(null);
       } finally {
@@ -75,6 +77,7 @@ export function AuthProvider({ children }) {
       // Ignore network errors on logout
     } finally {
       localStorage.removeItem('a_una_milla_token');
+      localStorage.removeItem('a_una_milla_saved_trips');
       setToken(null);
       setUser(null);
     }

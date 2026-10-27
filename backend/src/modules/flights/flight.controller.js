@@ -29,8 +29,9 @@ export async function searchFlightsController(req, res, next) {
 
 export async function getAwardAvailabilityController(req, res, next) {
   try {
-    const awardResult = await awardProviderAdapter.searchAwardAvailability(req.query);
-    return successResponse(res, awardResult, {}, 200);
+    const params = req.method === 'POST' ? req.body : req.query;
+    const awardResult = await awardProviderAdapter.searchAwardAvailability(params);
+    return successResponse(res, awardResult, awardResult.meta || {}, 200);
   } catch (err) {
     next(err);
   }

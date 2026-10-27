@@ -13,6 +13,7 @@ import { SavedTripsModal } from '../components/common/SavedTripsModal';
 import { SignInModal } from '../components/common/SignInModal';
 import { TravelDashboardModal } from '../features/dashboard/TravelDashboardModal';
 import { RedemptionPlannerModal } from '../features/savings/RedemptionPlannerModal';
+import { FlightBookingModal } from '../features/bookings/FlightBookingModal';
 
 import { useFlightSearch } from '../hooks/useFlightSearch';
 import { useSavedTrips } from '../hooks/useSavedTrips';
@@ -53,10 +54,23 @@ export function LandingPage() {
   const [isSavedTripsOpen, setIsSavedTripsOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [dashboardTab, setDashboardTab] = useState('cards');
   const [isRedemptionPlannerOpen, setIsRedemptionPlannerOpen] = useState(false);
   const [redemptionFlightOffer, setRedemptionFlightOffer] = useState(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingFlightOffer, setBookingFlightOffer] = useState(null);
 
   const isCurrentTripSaved = isTripSaved(searchResult);
+
+  const handleOpenDashboard = (tab = 'cards') => {
+    setDashboardTab(tab);
+    setIsDashboardOpen(true);
+  };
+
+  const handleOpenBooking = (offer) => {
+    setBookingFlightOffer(offer || searchResult);
+    setIsBookingModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#F3F5F6] flex flex-col selection:bg-[#087E8B]/20 selection:text-[#073B68]">
@@ -65,7 +79,7 @@ export function LandingPage() {
         savedCount={savedCount}
         onOpenSavedTrips={() => setIsSavedTripsOpen(true)}
         onOpenSignIn={() => setIsSignInOpen(true)}
-        onOpenDashboard={() => setIsDashboardOpen(true)}
+        onOpenDashboard={handleOpenDashboard}
       />
 
       {/* Main Content Area */}
@@ -202,6 +216,7 @@ export function LandingPage() {
                   setRedemptionFlightOffer(offer || searchResult);
                   setIsRedemptionPlannerOpen(true);
                 }}
+                onOpenBooking={handleOpenBooking}
               />
 
               {searchResult && (
@@ -252,6 +267,7 @@ export function LandingPage() {
         isOpen={isDashboardOpen}
         onClose={() => setIsDashboardOpen(false)}
         savedTrips={savedTrips}
+        initialTab={dashboardTab}
         onSelectTrip={applyPresetRoute}
       />
 
@@ -260,6 +276,18 @@ export function LandingPage() {
         onClose={() => setIsRedemptionPlannerOpen(false)}
         flightOffer={redemptionFlightOffer || searchResult}
         onOpenSignIn={() => setIsSignInOpen(true)}
+        onOpenBookingModal={handleOpenBooking}
+      />
+
+      <FlightBookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        flightOffer={bookingFlightOffer || searchResult}
+        onOpenSignIn={() => setIsSignInOpen(true)}
+        onBookingSuccess={() => {
+          // Open dashboard bookings tab
+          handleOpenDashboard('bookings');
+        }}
       />
     </div>
   );
