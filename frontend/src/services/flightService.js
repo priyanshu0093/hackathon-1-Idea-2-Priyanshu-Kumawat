@@ -143,7 +143,7 @@ export async function searchAwardFlights(searchParams, { signal } = {}) {
     queryParams.append('program', searchParams.program);
   }
 
-  const response = await fetch(`${API_BASE_URL}/flights/award-search?${queryParams.toString()}`, {
+  const response = await fetch(`${API_CONFIG.baseUrl}/api/v1/flights/award-search?${queryParams.toString()}`, {
     signal,
   });
 

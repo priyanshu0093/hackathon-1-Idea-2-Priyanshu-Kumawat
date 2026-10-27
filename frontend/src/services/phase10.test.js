@@ -22,7 +22,7 @@ describe('Phase 10: Frontend Services (Wallet, Forecast, Bookings)', () => {
     vi.restoreAllMocks();
   });
 
-  describe('API Client Bearer Authentication', () => {
+  describe('API Client Bearer Authentication & URL Resolution', () => {
     it('automatically attaches Authorization Bearer header when token exists', async () => {
       localStorage.setItem('a_una_milla_token', 'test-jwt-token-123');
 
@@ -41,6 +41,60 @@ describe('Phase 10: Frontend Services (Wallet, Forecast, Bookings)', () => {
           }),
         })
       );
+    });
+
+    it('resolves full backend URL when API_CONFIG.baseUrl is configured', async () => {
+      const { API_CONFIG } = await import('./apiConfig');
+      const originalBaseUrl = API_CONFIG.baseUrl;
+      API_CONFIG.baseUrl = 'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com';
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, data: { user: { id: 'usr_123' } } }),
+      });
+
+      await apiRequest('/api/v1/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'test@example.com', password: 'password123' }),
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com/api/v1/auth/login',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+
+      API_CONFIG.baseUrl = originalBaseUrl;
+    });
+
+    it('does not duplicate /api/v1 when baseUrl already ends with /api/v1', async () => {
+      const { API_CONFIG, buildApiUrl } = await import('./apiConfig');
+      const originalBaseUrl = API_CONFIG.baseUrl;
+      API_CONFIG.baseUrl = 'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com/api/v1';
+
+      expect(buildApiUrl('/api/v1/auth/login')).toBe(
+        'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com/api/v1/auth/login'
+      );
+      expect(buildApiUrl('/auth/login')).toBe(
+        'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com/api/v1/auth/login'
+      );
+      expect(buildApiUrl('api/v1/auth/signup')).toBe(
+        'https://hackathon-1-idea-2-priyanshu-kumawat.onrender.com/api/v1/auth/signup'
+      );
+
+      API_CONFIG.baseUrl = originalBaseUrl;
+    });
+
+    it('preserves local proxy path when baseUrl is empty', async () => {
+      const { API_CONFIG, buildApiUrl } = await import('./apiConfig');
+      const originalBaseUrl = API_CONFIG.baseUrl;
+      API_CONFIG.baseUrl = '';
+
+      expect(buildApiUrl('/api/v1/auth/login')).toBe('/api/v1/auth/login');
+      expect(buildApiUrl('/auth/login')).toBe('/api/v1/auth/login');
+
+      API_CONFIG.baseUrl = originalBaseUrl;
     });
   });
 

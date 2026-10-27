@@ -1,3 +1,5 @@
+import { buildApiUrl } from './apiConfig';
+
 /**
  * Unified API Client with Bearer token authentication support
  */
@@ -12,7 +14,9 @@ export async function apiRequest(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(endpoint, {
+  const url = buildApiUrl(endpoint);
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });
