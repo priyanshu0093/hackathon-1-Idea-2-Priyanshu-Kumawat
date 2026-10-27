@@ -14,6 +14,7 @@ import flightRoutes from './modules/flights/flight.routes.js';
 import savingsRoutes from './modules/savings/savings.routes.js';
 import airportRoutes from './modules/airports/airport.routes.js';
 import advisorRoutes from './modules/advisor/advisor.routes.js';
+import tripsRoutes from './modules/trips/trips.routes.js';
 
 const app = express();
 
@@ -63,7 +64,9 @@ app.get('/api/v1/health', (req, res) => {
     environment: env.NODE_ENV,
     database: {
       connected: isDbConnected(),
-      mode: isDbConnected() ? 'mongodb' : 'in-memory',
+      dialect: 'postgresql',
+      provider: 'supabase',
+      mode: isDbConnected() ? 'postgresql' : 'disconnected',
     },
     providers: {
       cashFlightProvider: {
@@ -92,6 +95,7 @@ app.use('/api/v1/flights', flightRoutes);
 app.use('/api/v1/savings', savingsRoutes);
 app.use('/api/v1/airports', airportRoutes);
 app.use('/api/v1/advisor', advisorRoutes);
+app.use('/api/v1/trips', tripsRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);
