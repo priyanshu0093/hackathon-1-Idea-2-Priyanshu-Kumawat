@@ -44,8 +44,8 @@ export class AdvisorService {
     // 2. Generate analysis via deterministic expert engine
     const analysis = generateAdvisorAdvice(payload);
 
-    // 3. Cache results for 10 minutes (600s)
-    flightCache.set(cacheKey, analysis, 600);
+    // 3. Cache results for 10 minutes (600s = 600,000ms)
+    flightCache.set(cacheKey, analysis, 600 * 1000);
 
     return analysis;
   }

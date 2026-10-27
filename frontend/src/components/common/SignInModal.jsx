@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export function SignInModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
@@ -84,7 +84,7 @@ export function SignInModal({ isOpen, onClose }) {
               </button>
 
               <div className="text-center text-[11px] text-slate-400 pt-1">
-                Passwordless magic link authentication. In Phase 2 this syncs with MongoDB user preferences.
+                Passwordless authentication preview. Saved trips currently persist client-side via local storage.
               </div>
             </form>
           )}

@@ -17,7 +17,10 @@ export async function searchFlightsController(req, res, next) {
 
     return successResponse(res, results, results.meta || {}, 200);
   } catch (err) {
-    if (err.message.includes('not configured')) {
+    if (err.statusCode || err.code) {
+      return errorResponse(res, err.message, err.statusCode || 500, null, err.code || 'INTERNAL_ERROR');
+    }
+    if (err.message?.includes('not configured')) {
       return errorResponse(res, err.message, 503, null, 'PROVIDER_UNCONFIGURED');
     }
     next(err);

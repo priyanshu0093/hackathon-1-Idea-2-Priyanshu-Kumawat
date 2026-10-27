@@ -6,7 +6,8 @@ import { successResponse } from '../../utils/apiResponse.js';
  * Supports case-insensitive matching across IATA code, city, airport name, and country
  */
 export function getAirportsController(req, res) {
-  const query = (req.query.q || '').trim().toLowerCase();
+  const rawQuery = typeof req.query.q === 'string' ? req.query.q.slice(0, 100) : '';
+  const query = rawQuery.trim().toLowerCase();
 
   if (!query) {
     return successResponse(res, AIRPORTS);

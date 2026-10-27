@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Bookmark, Trash2, ArrowRight, Plane, Sparkles, TrendingDown } from 'lucide-react';
+import { X, Bookmark, Trash2, ArrowRight, TrendingDown } from 'lucide-react';
 import { formatEuro, formatPoints } from '../../lib/formatters';
 
 export function SavedTripsModal({

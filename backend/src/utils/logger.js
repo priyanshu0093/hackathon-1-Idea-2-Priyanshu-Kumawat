@@ -12,11 +12,23 @@ const SENSITIVE_KEYS = [
   'api_key',
   'apikey',
   'seats_aero_api_key',
+  'credential',
+  'cookie',
+  'private_key',
+  'access_token',
+  'refresh_token',
 ];
+
+function sanitizeString(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi, 'Bearer [REDACTED]')
+    .replace(/(client_secret|api_key|apikey|password|secret)=([^&\s]+)/gi, '$1=[REDACTED]');
+}
 
 function redactSensitiveData(data) {
   if (!data || typeof data !== 'object') {
-    return data;
+    return typeof data === 'string' ? sanitizeString(data) : data;
   }
 
   if (Array.isArray(data)) {
@@ -29,6 +41,8 @@ function redactSensitiveData(data) {
       sanitized[key] = '[REDACTED]';
     } else if (typeof value === 'object' && value !== null) {
       sanitized[key] = redactSensitiveData(value);
+    } else if (typeof value === 'string') {
+      sanitized[key] = sanitizeString(value);
     } else {
       sanitized[key] = value;
     }
@@ -39,24 +53,28 @@ function redactSensitiveData(data) {
 export const logger = {
   info: (message, meta = {}) => {
     const timestamp = new Date().toISOString();
+    const cleanMsg = sanitizeString(message);
     const safeMeta = Object.keys(meta).length > 0 ? ` ${JSON.stringify(redactSensitiveData(meta))}` : '';
-    console.log(`[${timestamp}] [INFO] ${message}${safeMeta}`);
+    console.log(`[${timestamp}] [INFO] ${cleanMsg}${safeMeta}`);
   },
   warn: (message, meta = {}) => {
     const timestamp = new Date().toISOString();
+    const cleanMsg = sanitizeString(message);
     const safeMeta = Object.keys(meta).length > 0 ? ` ${JSON.stringify(redactSensitiveData(meta))}` : '';
-    console.warn(`[${timestamp}] [WARN] ${message}${safeMeta}`);
+    console.warn(`[${timestamp}] [WARN] ${cleanMsg}${safeMeta}`);
   },
   error: (message, meta = {}) => {
     const timestamp = new Date().toISOString();
+    const cleanMsg = sanitizeString(message);
     const safeMeta = Object.keys(meta).length > 0 ? ` ${JSON.stringify(redactSensitiveData(meta))}` : '';
-    console.error(`[${timestamp}] [ERROR] ${message}${safeMeta}`);
+    console.error(`[${timestamp}] [ERROR] ${cleanMsg}${safeMeta}`);
   },
   debug: (message, meta = {}) => {
     if (process.env.NODE_ENV === 'development') {
       const timestamp = new Date().toISOString();
+      const cleanMsg = sanitizeString(message);
       const safeMeta = Object.keys(meta).length > 0 ? ` ${JSON.stringify(redactSensitiveData(meta))}` : '';
-      console.debug(`[${timestamp}] [DEBUG] ${message}${safeMeta}`);
+      console.debug(`[${timestamp}] [DEBUG] ${cleanMsg}${safeMeta}`);
     }
   },
 };

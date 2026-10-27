@@ -1,3 +1,4 @@
+import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { errorResponse } from '../utils/apiResponse.js';
 
@@ -5,14 +6,20 @@ export function errorHandler(err, req, res, next) { // eslint-disable-line no-un
   logger.error('Unhandled request error', {
     message: err.message,
     name: err.name,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    stack: env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.originalUrl,
     method: req.method,
   });
 
-  const statusCode = err.statusCode || (err.status && typeof err.status === 'number' ? err.status : 500);
-  const code = err.code || 'INTERNAL_SERVER_ERROR';
-  const message = err.isOperational || process.env.NODE_ENV === 'development'
+  let statusCode = err.statusCode || (err.status && typeof err.status === 'number' ? err.status : 500);
+  let code = err.code || 'INTERNAL_SERVER_ERROR';
+
+  if (err.message && err.message.includes('CORS')) {
+    statusCode = 403;
+    code = 'CORS_ERROR';
+  }
+
+  const message = err.isOperational || env.NODE_ENV === 'development'
     ? err.message
     : 'An unexpected internal server error occurred.';
 

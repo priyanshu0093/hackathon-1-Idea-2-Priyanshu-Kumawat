@@ -20,12 +20,27 @@ const app = express();
 // Security headers
 app.use(helmet());
 
+const isProduction = env.NODE_ENV === 'production';
+const allowedOrigins = env.FRONTEND_URL
+  ? env.FRONTEND_URL.split(',').map((url) => url.trim().replace(/\/+$/, ''))
+  : [];
+
 // CORS configuration
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow browser requests, local frontend, or server-to-server calls without origin header
-      callback(null, true);
+      // Allow non-browser or local server-to-server calls without origin header
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (!isProduction) {
+        return callback(null, true);
+      }
+      const normalizedOrigin = origin.replace(/\/+$/, '');
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} is not allowed by CORS.`));
     },
     credentials: true,
   })

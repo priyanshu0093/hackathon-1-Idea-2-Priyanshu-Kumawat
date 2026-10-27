@@ -1,5 +1,11 @@
 import { env } from '../../config/env.js';
 import { logger } from '../../utils/logger.js';
+import {
+  ProviderUnconfiguredError,
+  ProviderTimeoutError,
+  ProviderRateLimitError,
+  ProviderError,
+} from '../../utils/errors.js';
 
 export class AmadeusClient {
   constructor(options = {}) {
@@ -29,7 +35,7 @@ export class AmadeusClient {
    */
   async getAccessToken() {
     if (!this.isConfigured()) {
-      throw new Error('Amadeus credentials are not configured. Set AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET in .env');
+      throw new ProviderUnconfiguredError();
     }
 
     // Return active token if still valid (with 60-second safety buffer)
@@ -149,14 +155,17 @@ export class AmadeusClient {
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
         const amadeusError = errorJson.errors?.[0]?.detail || `Status ${res.status}: ${res.statusText}`;
-        throw new Error(`Amadeus Search Error: ${amadeusError}`);
+        if (res.status === 429) {
+          throw new ProviderRateLimitError(`Amadeus API rate limit exceeded: ${amadeusError}`);
+        }
+        throw new ProviderError(`Amadeus Search Error (${res.status}): ${amadeusError}`);
       }
 
       return await res.json();
     } catch (err) {
       clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Amadeus request timed out or was cancelled');
+      if (err.name === 'AbortError' || err.message?.includes('timed out')) {
+        throw new ProviderTimeoutError('Flight search request to Amadeus timed out or was cancelled');
       }
       throw err;
     }

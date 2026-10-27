@@ -167,7 +167,7 @@ export function AirportSelect({
             <input
               type="text"
               className="w-full text-sm bg-transparent outline-none placeholder-slate-400 text-slate-800"
-              placeholder="Search airport, city, or IATA code..."
+              placeholder={placeholder || 'Search airport, city, or IATA code...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus
