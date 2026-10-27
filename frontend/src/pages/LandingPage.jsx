@@ -11,6 +11,7 @@ import { TrustSection } from '../components/sections/TrustSection';
 import { BookingGuideModal } from '../features/savings/BookingGuideModal';
 import { SavedTripsModal } from '../components/common/SavedTripsModal';
 import { SignInModal } from '../components/common/SignInModal';
+import { TravelDashboardModal } from '../features/dashboard/TravelDashboardModal';
 
 import { useFlightSearch } from '../hooks/useFlightSearch';
 import { useSavedTrips } from '../hooks/useSavedTrips';
@@ -50,6 +51,7 @@ export function LandingPage() {
   const [isBookingGuideOpen, setIsBookingGuideOpen] = useState(false);
   const [isSavedTripsOpen, setIsSavedTripsOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
 
   const isCurrentTripSaved = isTripSaved(searchResult);
 
@@ -60,6 +62,7 @@ export function LandingPage() {
         savedCount={savedCount}
         onOpenSavedTrips={() => setIsSavedTripsOpen(true)}
         onOpenSignIn={() => setIsSignInOpen(true)}
+        onOpenDashboard={() => setIsDashboardOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -236,6 +239,13 @@ export function LandingPage() {
       <SignInModal
         isOpen={isSignInOpen}
         onClose={() => setIsSignInOpen(false)}
+      />
+
+      <TravelDashboardModal
+        isOpen={isDashboardOpen}
+        onClose={() => setIsDashboardOpen(false)}
+        savedTrips={savedTrips}
+        onSelectTrip={applyPresetRoute}
       />
     </div>
   );

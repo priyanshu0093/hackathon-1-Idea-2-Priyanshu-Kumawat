@@ -4,13 +4,22 @@ import { savedTrips } from '../../db/schema.js';
 
 export class TripsRepository {
   /**
-   * Fetch all saved trips ordered by creation date descending
+   * Fetch saved trips, optionally filtered by authenticated user
    */
-  async findAll() {
+  async findAll(userId = null) {
     const db = getDb();
     if (!db) {
       throw new Error('Database not connected');
     }
+
+    if (userId) {
+      return await db
+        .select()
+        .from(savedTrips)
+        .where(eq(savedTrips.userId, userId))
+        .orderBy(desc(savedTrips.createdAt));
+    }
+
     return await db
       .select()
       .from(savedTrips)
@@ -35,7 +44,7 @@ export class TripsRepository {
   }
 
   /**
-   * Insert or update a trip record
+   * Insert or update a trip record with user ownership
    */
   async upsert(tripData) {
     const db = getDb();
@@ -45,6 +54,7 @@ export class TripsRepository {
 
     const payload = {
       id: tripData.id,
+      userId: tripData.userId || null,
       origin: tripData.origin,
       destination: tripData.destination,
       cabin: tripData.cabin || 'economy',

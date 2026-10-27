@@ -2,11 +2,13 @@ import { tripsService } from './trips.service.js';
 
 export async function listTrips(req, res, next) {
   try {
-    const trips = await tripsService.getSavedTrips();
+    const userId = req.user?.id || null;
+    const trips = await tripsService.getSavedTrips(userId);
     res.status(200).json({
       data: trips,
       meta: {
         count: trips.length,
+        userId,
         persistence: 'supabase_postgresql',
         timestamp: new Date().toISOString(),
       },
@@ -19,7 +21,8 @@ export async function listTrips(req, res, next) {
 export async function getTrip(req, res, next) {
   try {
     const { id } = req.params;
-    const trip = await tripsService.getTrip(id);
+    const userId = req.user?.id || null;
+    const trip = await tripsService.getTrip(id, userId);
     res.status(200).json({
       data: trip,
       meta: {
@@ -33,11 +36,13 @@ export async function getTrip(req, res, next) {
 
 export async function createTrip(req, res, next) {
   try {
-    const savedTrip = await tripsService.saveTrip(req.validatedBody || req.body);
+    const userId = req.user?.id || null;
+    const savedTrip = await tripsService.saveTrip(req.validatedBody || req.body, userId);
     res.status(201).json({
       data: savedTrip,
       meta: {
         persisted: true,
+        userId,
         persistence: 'supabase_postgresql',
         timestamp: new Date().toISOString(),
       },
@@ -50,7 +55,8 @@ export async function createTrip(req, res, next) {
 export async function deleteTrip(req, res, next) {
   try {
     const { id } = req.params;
-    const deleted = await tripsService.removeTrip(id);
+    const userId = req.user?.id || null;
+    const deleted = await tripsService.removeTrip(id, userId);
     res.status(200).json({
       message: 'Trip removed successfully from database',
       data: deleted,

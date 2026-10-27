@@ -15,6 +15,10 @@ import savingsRoutes from './modules/savings/savings.routes.js';
 import airportRoutes from './modules/airports/airport.routes.js';
 import advisorRoutes from './modules/advisor/advisor.routes.js';
 import tripsRoutes from './modules/trips/trips.routes.js';
+import authRoutes from './modules/auth/auth.routes.js';
+import walletRoutes from './modules/wallet/wallet.routes.js';
+import forecastRoutes from './modules/forecast/forecast.routes.js';
+import bookingRoutes from './modules/bookings/booking.routes.js';
 
 const app = express();
 
@@ -96,6 +100,10 @@ app.use('/api/v1/savings', savingsRoutes);
 app.use('/api/v1/airports', airportRoutes);
 app.use('/api/v1/advisor', advisorRoutes);
 app.use('/api/v1/trips', tripsRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/wallet', walletRoutes);
+app.use('/api/v1/forecast', forecastRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);

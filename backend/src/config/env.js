@@ -24,6 +24,7 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(60),
   CACHE_TTL_SECONDS: z.coerce.number().default(900),
+  JWT_SECRET: z.string().default('a-una-milla-super-secret-jwt-key-phase-10-production'),
 });
 
 const parsed = envSchema.safeParse(process.env);
