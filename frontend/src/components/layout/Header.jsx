@@ -70,6 +70,22 @@ export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn, onOpenD
 
           {/* Action buttons */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Saved Trips Button */}
+            <button
+              onClick={onOpenSavedTrips}
+              id="saved-trips-btn"
+              className="relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-[#0B347D] transition-colors border border-slate-200/90 cursor-pointer"
+              aria-label={`Saved Trips: ${savedCount} items`}
+            >
+              <Bookmark className="w-4 h-4 text-[#0B347D]" />
+              <span>Saved</span>
+              {savedCount > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-[#0B347D] text-white">
+                  {savedCount}
+                </span>
+              )}
+            </button>
+
             {/* Dashboard / Sign in */}
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
@@ -108,6 +124,19 @@ export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn, onOpenD
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={onOpenSavedTrips}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 relative cursor-pointer"
+              aria-label="View Saved Trips"
+            >
+              <Bookmark className="w-5 h-5 text-[#0B347D]" />
+              {savedCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-[#0B347D] text-white rounded-full text-[10px] flex items-center justify-center font-bold">
+                  {savedCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none"

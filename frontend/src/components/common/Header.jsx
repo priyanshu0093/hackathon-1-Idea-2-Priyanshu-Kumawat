@@ -68,6 +68,22 @@ export function Header({ savedCount = 0, onOpenSavedTrips, onOpenSignIn }) {
 
           {/* Action buttons */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Saved Trips Button */}
+            <button
+              onClick={onOpenSavedTrips}
+              id="saved-trips-btn"
+              className="relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-[#0B347D] transition-colors border border-slate-200/90 cursor-pointer"
+              aria-label={`Saved Trips: ${savedCount} items`}
+            >
+              <Bookmark className="w-4 h-4 text-[#0B347D]" />
+              <span>Saved</span>
+              {savedCount > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-[#0B347D] text-white">
+                  {savedCount}
+                </span>
+              )}
+            </button>
+
             {/* Sign in / Account */}
             <button
               onClick={onOpenSignIn}
