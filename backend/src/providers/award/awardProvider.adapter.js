@@ -1,36 +1,46 @@
-import { env } from '../../config/env.js';
+import { seatsAeroAdapter } from './seatsAero/seatsAero.adapter.js';
+import { mockAwardAdapter } from './mock/mockAward.adapter.js';
 
 export class AwardProviderAdapter {
-  constructor() {
-    this.apiKey = env.SEATS_AERO_API_KEY;
-  }
-
   isConfigured() {
-    return Boolean(this.apiKey && this.apiKey.trim().length > 0);
+    return seatsAeroAdapter.isConfigured();
   }
 
-  async searchAwardAvailability(params) { // eslint-disable-line no-unused-vars
-    // If no licensed partner award inventory credentials exist, return explicit unsupported state
-    if (!this.isConfigured()) {
+  getActiveProvider(params = {}) {
+    const isDemo = params.demo === true || params.provider === 'mock' || params.provider === 'demo';
+    if (isDemo) {
+      return mockAwardAdapter;
+    }
+    return seatsAeroAdapter;
+  }
+
+  async searchAwardAvailability(params = {}, options = {}) {
+    const isDemo = params.demo === true || params.provider === 'mock' || params.provider === 'demo';
+
+    if (isDemo && params.origin && params.destination) {
+      return await mockAwardAdapter.searchAwards(params, options);
+    }
+
+    if (!this.isConfigured() || !params.origin || !params.destination) {
       return {
         status: 'unsupported',
         available: false,
-        reason: 'Live award seat inventory provider (e.g. Seats.aero / PointsYeah) is not configured or authorized on this server.',
-        loyaltyProgram: null,
-        requiredPoints: null,
-        taxesAndFees: null,
-        seatsAvailable: null,
-        dataFreshness: null,
-        bookingInstructions: null,
+        provider: 'seats_aero',
+        reason:
+          'Award flight inventory provider is not configured or authorized. Live award flight inventory provider (Seats.aero) requires an authorized commercial partner agreement. Personal Pro API keys are legally restricted to personal, non-commercial use.',
+        eligibilityNote:
+          'To enable live award search, configure commercial API credentials in SEATS_AERO_API_KEY. Alternatively, use Demo Mode or the Smart Savings Redemption Planner with user-entered estimates.',
+        offers: [],
+        total: 0,
+        meta: {
+          dataSource: 'unconfigured',
+          retrievalTimestamp: new Date().toISOString(),
+          fromCache: false,
+        },
       };
     }
 
-    // Future Phase: When SEATS_AERO_API_KEY is configured and approved, query live award endpoint
-    return {
-      status: 'unsupported',
-      available: false,
-      reason: 'Seats.aero commercial API access is pending authorization.',
-    };
+    return await seatsAeroAdapter.searchAwards(params, options);
   }
 }
 

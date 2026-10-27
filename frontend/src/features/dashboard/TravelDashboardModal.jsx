@@ -16,7 +16,10 @@ import {
   CheckCircle2,
   PlaneTakeoff,
   ExternalLink,
+  CreditCard,
 } from 'lucide-react';
+import { CardsAndRewardsSection } from './CardsAndRewardsSection';
+import { SmartRecommendationsSection } from '../recommendations/SmartRecommendationsSection';
 import { useAuth } from '../../context/AuthContext';
 import { fetchWallet, saveWalletBalance, removeWalletBalance } from '../../services/walletService';
 import { calculateForecast, saveForecast, getSavedForecast } from '../../services/forecastService';
@@ -35,9 +38,15 @@ const POPULAR_PROGRAMS = [
   'Amex Membership Rewards',
 ];
 
-export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelectTrip }) {
+export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelectTrip, initialTab = 'cards' }) {
   const { user, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState('wallet'); // 'wallet' | 'forecast' | 'planner' | 'bookings'
+  const [activeTab, setActiveTab] = useState(initialTab || 'cards'); // 'cards' | 'wallet' | 'forecast' | 'planner' | 'bookings'
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
 
   // Wallet State
   const [wallet, setWallet] = useState({ balances: [], summary: { totalPoints: 0 } });
@@ -73,15 +82,21 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
   const [bookingSavedEst, setBookingSavedEst] = useState('1800');
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState('all'); // 'all' | 'cash' | 'redemption' | 'external'
 
   // Load User Data
   useEffect(() => {
-    if (!isOpen || !isAuthenticated) return;
+    if (!isOpen || !isAuthenticated || !user?.id) {
+      setWallet({ balances: [], summary: { totalPoints: 0 } });
+      setForecastResult(null);
+      setBookings([]);
+      return;
+    }
 
     loadWalletData();
     loadForecastData();
     loadBookingsData();
-  }, [isOpen, isAuthenticated]);
+  }, [isOpen, isAuthenticated, user?.id]);
 
   const loadWalletData = async () => {
     try {
@@ -253,7 +268,7 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                {user ? `Logged in as ${user.name || user.email}` : 'Points wallet, 30/60/90-day forecast, and external booking tracker.'}
+                {user ? `Logged in as ${user.name || user.email}` : 'Cards rewards wallet, 30/60/90-day forecast, and external booking tracker.'}
               </p>
             </div>
           </div>
@@ -269,18 +284,18 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
         {/* Dashboard Navigation Tabs */}
         <div className="bg-[#073B68]/95 px-6 border-t border-white/10 flex overflow-x-auto gap-1 text-xs font-semibold text-slate-200 scrollbar-none">
           <button
-            onClick={() => setActiveTab('wallet')}
-            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
-              activeTab === 'wallet' ? 'border-cyan-300 text-white' : 'border-transparent text-slate-300 hover:text-white'
+            onClick={() => setActiveTab('cards')}
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 cursor-pointer ${
+              activeTab === 'cards' || activeTab === 'wallet' ? 'border-cyan-300 text-white font-bold' : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
-            <Wallet className="w-4 h-4 text-cyan-300" />
-            <span>Points Wallet ({wallet.balances?.length || 0})</span>
+            <CreditCard className="w-4 h-4 text-cyan-300" />
+            <span>My Cards & Rewards</span>
           </button>
           <button
             onClick={() => { setActiveTab('forecast'); handleRecalculateForecast(); }}
-            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
-              activeTab === 'forecast' ? 'border-cyan-300 text-white' : 'border-transparent text-slate-300 hover:text-white'
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 cursor-pointer ${
+              activeTab === 'forecast' ? 'border-cyan-300 text-white font-bold' : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -288,17 +303,26 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
           </button>
           <button
             onClick={() => setActiveTab('planner')}
-            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
-              activeTab === 'planner' ? 'border-cyan-300 text-white' : 'border-transparent text-slate-300 hover:text-white'
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 cursor-pointer ${
+              activeTab === 'planner' ? 'border-cyan-300 text-white font-bold' : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <PlaneTakeoff className="w-4 h-4 text-amber-300" />
             <span>Trip Planner & Shortfall ({savedTrips?.length || 0})</span>
           </button>
           <button
+            onClick={() => setActiveTab('recommendations')}
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 cursor-pointer ${
+              activeTab === 'recommendations' ? 'border-cyan-300 text-white font-bold' : 'border-transparent text-slate-300 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-cyan-300" />
+            <span>Smart Recommendations</span>
+          </button>
+          <button
             onClick={() => setActiveTab('bookings')}
-            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 ${
-              activeTab === 'bookings' ? 'border-cyan-300 text-white' : 'border-transparent text-slate-300 hover:text-white'
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors shrink-0 cursor-pointer ${
+              activeTab === 'bookings' ? 'border-cyan-300 text-white font-bold' : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <FileCheck2 className="w-4 h-4 text-purple-300" />
@@ -307,7 +331,12 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
         </div>
 
         {/* Dashboard Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
+
+          {/* TAB 0: MY CARDS & REWARDS */}
+          {(activeTab === 'cards' || activeTab === 'wallet') && (
+            <CardsAndRewardsSection key={user?.id || 'guest'} />
+          )}
 
           {/* TAB 1: POINTS WALLET */}
           {activeTab === 'wallet' && (
@@ -848,32 +877,74 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
             </div>
           )}
 
-          {/* TAB 4: EXTERNAL BOOKING MANAGEMENT */}
+          {/* TAB 3.5: SMART RECOMMENDATIONS */}
+          {activeTab === 'recommendations' && (
+            <SmartRecommendationsSection
+              onOpenFlightSearch={(origin, dest, cabin) => {
+                onSelectTrip?.(origin, dest, cabin);
+                onClose();
+              }}
+            />
+          )}
+
+          {/* TAB 4: EXTERNAL & SIMULATED BOOKINGS */}
           {activeTab === 'bookings' && (
             <div className="space-y-6">
-              {/* Disclosure banner */}
-              <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 flex items-start gap-3">
-                <FileCheck2 className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs text-purple-950">
-                  <span className="font-bold block">
-                    Self-Reported External Bookings Tracker
-                  </span>
-                  <p className="text-purple-800 leading-relaxed">
-                    A Una Milla is an independent travel intelligence platform. We do not sell tickets or issue bookings directly.
-                    Use this tool to track reservations you completed externally on official airline websites.
-                  </p>
+              {/* Category Filter & Management Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-200/60 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setBookingFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      bookingFilter === 'all'
+                        ? 'bg-white text-slate-900 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    All Bookings ({bookings.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFilter('cash')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      bookingFilter === 'cash'
+                        ? 'bg-white text-emerald-800 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Real Cash Orders ({bookings.filter((b) => b.recordSource === 'duffel_cash_booking').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFilter('redemption')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      bookingFilter === 'redemption'
+                        ? 'bg-white text-amber-900 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Demo Redemptions ({bookings.filter((b) => b.recordSource === 'simulated_reward_redemption').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingFilter('external')}
+                    className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                      bookingFilter === 'external'
+                        ? 'bg-white text-purple-900 font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Self-Reported ({bookings.filter((b) => b.recordSource === 'user_entered_external').length})
+                  </button>
                 </div>
-              </div>
 
-              {/* Add booking toggle */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-900">Your External Flight Bookings</h3>
                 <button
                   onClick={() => setIsAddingBooking(!isAddingBooking)}
-                  className="py-1.5 px-3 rounded-xl text-xs font-bold bg-[#0B347D] hover:bg-[#073B68] text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="py-1.5 px-3 rounded-xl text-xs font-bold bg-[#0B347D] hover:bg-[#073B68] text-white flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>{isAddingBooking ? 'Cancel' : 'Record External Booking'}</span>
+                  <span>{isAddingBooking ? 'Cancel' : 'Add External Booking'}</span>
                 </button>
               </div>
 
@@ -956,7 +1027,7 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Cabin Class</label>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">Cabin</label>
                       <select
                         value={bookingCabin}
                         onChange={(e) => setBookingCabin(e.target.value)}
@@ -999,13 +1070,13 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
                     <button
                       type="button"
                       onClick={() => setIsAddingBooking(false)}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0B347D] text-white hover:bg-[#073B68]"
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0B347D] text-white hover:bg-[#073B68] cursor-pointer"
                     >
                       Save Booking Record
                     </button>
@@ -1014,74 +1085,115 @@ export function TravelDashboardModal({ isOpen, onClose, savedTrips = [], onSelec
               )}
 
               {/* Bookings list */}
-              {bookings.length === 0 ? (
-                <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200 space-y-3">
-                  <FileCheck2 className="w-8 h-8 text-slate-300 mx-auto" />
-                  <p className="text-sm font-semibold text-slate-700">No external bookings recorded yet</p>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Record your official airline booking reference to track your completed redemptions and flight dates.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {bookings.map((b) => (
-                    <div
-                      key={b.id}
-                      className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-base font-extrabold text-slate-900">
-                            {b.origin} → {b.destination}
-                          </span>
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#073B68]">
-                            PNR: {b.bookingReference}
-                          </span>
-                          <span className="text-xs text-slate-600">
-                            {b.airline} {b.flightNumber && `(${b.flightNumber})`}
-                          </span>
-                        </div>
+              {(() => {
+                const filteredBookings = bookings.filter((b) => {
+                  if (bookingFilter === 'cash') return b.recordSource === 'duffel_cash_booking';
+                  if (bookingFilter === 'redemption') return b.recordSource === 'simulated_reward_redemption';
+                  if (bookingFilter === 'external') return b.recordSource === 'user_entered_external';
+                  return true;
+                });
 
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800">
-                            Self-Reported Record
-                          </span>
-                          <button
-                            onClick={() => handleDeleteBooking(b.id)}
-                            className="p-1 rounded-lg text-slate-400 hover:text-red-500"
-                            title="Remove record"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-600 p-2.5 bg-slate-50 rounded-xl">
-                        <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Departure Date</span>
-                          <span className="font-semibold">{b.departureDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Cabin</span>
-                          <span className="font-semibold uppercase">{b.cabin}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Points Redeemed</span>
-                          <span className="font-bold text-[#073B68]">{formatPoints(b.pointsRedeemed)}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Taxes Paid</span>
-                          <span className="font-semibold">{formatEuro(b.taxesPaid)}</span>
-                        </div>
-                      </div>
-
-                      <div className="text-[11px] text-slate-400 italic">
-                        {b.sourceDisclosure}
-                      </div>
+                if (filteredBookings.length === 0) {
+                  return (
+                    <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-200 space-y-3">
+                      <FileCheck2 className="w-8 h-8 text-slate-300 mx-auto" />
+                      <p className="text-sm font-semibold text-slate-700">
+                        {bookingFilter === 'cash'
+                          ? 'No cash airline orders recorded yet'
+                          : bookingFilter === 'redemption'
+                          ? 'No simulated rewards redemptions yet'
+                          : 'No flight bookings in this category'}
+                      </p>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        Search flights to book with cash or redeem demo points, or record an external reservation reference.
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {filteredBookings.map((b) => (
+                      <div
+                        key={b.id}
+                        className={`p-5 rounded-2xl bg-white border shadow-xs space-y-3 ${
+                          b.recordSource === 'duffel_cash_booking'
+                            ? 'border-emerald-200'
+                            : b.recordSource === 'simulated_reward_redemption'
+                            ? 'border-amber-200'
+                            : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="text-base font-extrabold text-slate-900">
+                              {b.origin} → {b.destination}
+                            </span>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#073B68]">
+                              REF: {b.bookingReference}
+                            </span>
+                            <span className="text-xs text-slate-600">
+                              {b.airline} {b.flightNumber && `(${b.flightNumber})`}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {b.recordSource === 'duffel_cash_booking' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 flex items-center gap-1 border border-emerald-200">
+                                <Plane className="w-3 h-3 text-emerald-700" /> Real Airline Order
+                              </span>
+                            ) : b.recordSource === 'simulated_reward_redemption' ? (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-900 flex items-center gap-1 border border-amber-200">
+                                <Sparkles className="w-3 h-3 text-amber-700" /> Simulated Redemption
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800">
+                                Self-Reported
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleDeleteBooking(b.id)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-red-500 cursor-pointer"
+                              title="Remove record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-600 p-2.5 bg-slate-50 rounded-xl">
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold">Departure Date</span>
+                            <span className="font-semibold">{b.departureDate}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold">Cabin</span>
+                            <span className="font-semibold uppercase">{b.cabin}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                              {b.recordSource === 'duffel_cash_booking' ? 'Total Cash' : 'Points Redeemed'}
+                            </span>
+                            <span className="font-bold text-[#073B68]">
+                              {b.recordSource === 'duffel_cash_booking'
+                                ? formatEuro(b.totalAmount || b.taxesPaid)
+                                : formatPoints(b.pointsRedeemed)}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold">Taxes / Fees</span>
+                            <span className="font-semibold">{formatEuro(b.taxesPaid)}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-[11px] text-slate-400 italic">
+                          {b.sourceDisclosure}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

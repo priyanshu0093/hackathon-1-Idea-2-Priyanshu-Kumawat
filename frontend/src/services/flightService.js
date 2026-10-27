@@ -73,6 +73,9 @@ export async function searchFlights(searchParams, { signal, useDemo = false } = 
 
     // Best primary cash offer
     const bestCashOffer = offers[0];
+    const verifiedAwardOffer = Array.isArray(data.awardInventory?.offers) && data.awardInventory.offers.length > 0
+      ? data.awardInventory.offers[0]
+      : null;
 
     return {
       id: bestCashOffer.id,
@@ -90,22 +93,24 @@ export async function searchFlights(searchParams, { signal, useDemo = false } = 
       price: bestCashOffer.price,
       itineraries: bestCashOffer.itineraries,
       bookingUrl: bestCashOffer.bookingUrl,
-      // Award inventory status from server (Section 6)
+      // Award inventory status from server (Phase 15 Genuine Award Integration)
       awardInventory: data.awardInventory || {
         status: 'unsupported',
         available: false,
       },
+      verifiedAwardOffer,
       // Offer details for savings comparison
       offers: {
         cashPrice: bestCashOffer.price.total,
         taxesAndFees: bestCashOffer.price.taxesAndFees,
         currency: bestCashOffer.price.currency,
-        // Live award points are null unless provider supports live award seats
-        pointsRequired: null,
-        pointsProgram: null,
+        pointsRequired: verifiedAwardOffer ? verifiedAwardOffer.pointsRequired : null,
+        pointsProgram: verifiedAwardOffer ? verifiedAwardOffer.program?.name : null,
+        awardTaxesAndFees: verifiedAwardOffer ? verifiedAwardOffer.taxesAndFees?.amount : null,
+        awardCurrency: verifiedAwardOffer ? verifiedAwardOffer.taxesAndFees?.currency : null,
       },
       dataSource: bestCashOffer.dataSource || 'live',
-      provider: bestCashOffer.provider || 'amadeus',
+      provider: bestCashOffer.provider || 'duffel',
       isDemo: false,
       allOffers: offers,
     };
@@ -117,4 +122,36 @@ export async function searchFlights(searchParams, { signal, useDemo = false } = 
     // Strict requirement: Never silently fake live data with demo data when live search was requested
     throw err;
   }
+}
+
+/**
+ * Directly search award availability using genuine partner provider (Seats.aero)
+ */
+export async function searchAwardFlights(searchParams, { signal } = {}) {
+  const queryParams = new URLSearchParams({
+    origin: searchParams.origin,
+    destination: searchParams.destination,
+    departureDate: searchParams.departureDate,
+    cabin: searchParams.cabin || 'economy',
+    travelers: String(searchParams.travelers || 1),
+  });
+
+  if (searchParams.demo) {
+    queryParams.append('demo', 'true');
+  }
+  if (searchParams.program) {
+    queryParams.append('program', searchParams.program);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/flights/award-search?${queryParams.toString()}`, {
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `Failed to fetch award availability: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.data;
 }

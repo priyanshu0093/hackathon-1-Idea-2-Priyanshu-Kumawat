@@ -19,3 +19,24 @@ export async function removeExternalBooking(bookingId) {
   });
   return res.data;
 }
+
+export async function redeemDemoPoints(payload) {
+  const res = await apiRequest('/api/v1/bookings/redeem-points', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.data;
+}
+
+export async function revalidateDuffelOffer(offerId) {
+  const res = await apiRequest(`/api/v1/bookings/duffel/offers/${offerId}`);
+  return res.data;
+}
+
+export async function bookDuffelFlight(payload) {
+  const res = await apiRequest('/api/v1/bookings/duffel/book', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.data;
+}

@@ -55,3 +55,50 @@ export async function deleteBookingController(req, res, next) {
     next(error);
   }
 }
+
+export async function redeemDemoPointsController(req, res, next) {
+  try {
+    const result = await bookingService.redeemDemoPoints(
+      req.user.id,
+      req.validatedBody || req.body
+    );
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Demo points redeemed and flight booking simulated successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function revalidateOfferController(req, res, next) {
+  try {
+    const offerId = req.params.offerId || req.body.offerId;
+    const result = await bookingService.revalidateDuffelOffer(offerId);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function bookDuffelFlightController(req, res, next) {
+  try {
+    const result = await bookingService.bookDuffelFlight(
+      req.user.id,
+      req.validatedBody || req.body
+    );
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: result.isConfirmed
+        ? 'Flight booked successfully with airline'
+        : 'Flight booking submitted and pending confirmation',
+    });
+  } catch (error) {
+    next(error);
+  }
+}

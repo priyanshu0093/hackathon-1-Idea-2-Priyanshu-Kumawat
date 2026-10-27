@@ -47,3 +47,45 @@ export const flightSearchSchema = z
       path: ['returnDate'],
     }
   );
+
+export const awardSearchSchema = z
+  .object({
+    origin: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(iataRegex, 'Origin must be a 3-letter IATA airport code (e.g. MAD)')
+      .optional(),
+    destination: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(iataRegex, 'Destination must be a 3-letter IATA airport code (e.g. JFK)')
+      .optional(),
+    departureDate: z
+      .string()
+      .regex(dateRegex, 'Departure date must be in YYYY-MM-DD format')
+      .optional(),
+    cabin: z.enum(['economy', 'premium_economy', 'business', 'first']).default('economy'),
+    travelers: z.coerce.number().int().min(1).max(9).default(1),
+    program: z.string().trim().max(64).optional().nullable(),
+    maxOffers: z.coerce.number().int().min(1).max(20).default(10),
+    demo: z.preprocess((val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return val === 'true' || val === true || val === '1';
+    }, z.boolean().optional()),
+    provider: z.enum(['seats_aero', 'mock', 'demo']).optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.origin && data.destination) {
+        return data.origin !== data.destination;
+      }
+      return true;
+    },
+    {
+      message: 'Origin and destination airports cannot be identical',
+      path: ['destination'],
+    }
+  );
+

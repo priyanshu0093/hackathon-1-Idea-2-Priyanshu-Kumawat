@@ -20,6 +20,8 @@ import authRoutes from './modules/auth/auth.routes.js';
 import walletRoutes from './modules/wallet/wallet.routes.js';
 import forecastRoutes from './modules/forecast/forecast.routes.js';
 import bookingRoutes from './modules/bookings/booking.routes.js';
+import cardsRoutes from './modules/cards/cards.routes.js';
+import recommendationsRoutes from './modules/recommendations/recommendations.routes.js';
 
 const app = express();
 
@@ -109,6 +111,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/forecast', forecastRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/cards', cardsRoutes);
+app.use('/api/v1/recommendations', recommendationsRoutes);
 
 // 404 & Centralized Error Handlers
 app.use(notFoundHandler);

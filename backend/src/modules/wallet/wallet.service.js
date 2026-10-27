@@ -33,11 +33,14 @@ export class WalletService {
     let existing = null;
     if (data.id) {
       existing = await walletRepository.findByIdAndUser(data.id, userId);
+      if (!existing) {
+        throw new AppError('Loyalty balance record not found or access denied.', 404, 'NOT_FOUND');
+      }
     } else {
       existing = await walletRepository.findByProgramAndUser(data.program, userId);
     }
 
-    const id = existing ? existing.id : (data.id || `bal_${crypto.randomUUID()}`);
+    const id = existing ? existing.id : `bal_${crypto.randomUUID()}`;
 
     const payload = {
       id,

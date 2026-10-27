@@ -123,7 +123,57 @@ export async function runMigrations() {
       );
     `);
 
-    console.log('[MIGRATE] Phase 10 migrations applied successfully: users, saved_trips, loyalty_balances, points_forecasts, external_bookings.');
+    // Add booking columns if not already present
+    await client.query(`
+      ALTER TABLE "external_bookings"
+      ADD COLUMN IF NOT EXISTS "provider_order_id" varchar(128),
+      ADD COLUMN IF NOT EXISTS "total_amount" numeric(10, 2),
+      ADD COLUMN IF NOT EXISTS "currency" varchar(10) DEFAULT 'EUR',
+      ADD COLUMN IF NOT EXISTS "passenger_name" varchar(128);
+    `);
+
+    // 6. User Cards & Rewards Table (Spain Rewards Card Wallet)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "user_cards" (
+        "id" varchar(64) PRIMARY KEY NOT NULL,
+        "user_id" varchar(64) NOT NULL,
+        "card_product_id" varchar(64) NOT NULL,
+        "card_name" varchar(128) NOT NULL,
+        "issuer" varchar(64) NOT NULL,
+        "rewards_program" varchar(128) NOT NULL,
+        "currency" varchar(64) DEFAULT 'points' NOT NULL,
+        "nickname" varchar(64),
+        "estimated_monthly_spend" numeric(10, 2) DEFAULT '0',
+        "demo_balance" integer DEFAULT 0 NOT NULL,
+        "is_demo" boolean DEFAULT true NOT NULL,
+        "demo_balance_label" varchar(128) DEFAULT 'DEMO BALANCE — Not connected to your bank',
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+        CONSTRAINT "user_cards_user_product_unique" UNIQUE ("user_id", "card_product_id")
+      );
+    `);
+
+    // 7. Fare Snapshots Table (Best Time to Book & Price Tracking)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "fare_snapshots" (
+        "id" varchar(64) PRIMARY KEY NOT NULL,
+        "user_id" varchar(64),
+        "origin" varchar(10) NOT NULL,
+        "destination" varchar(10) NOT NULL,
+        "departure_date" varchar(32) NOT NULL,
+        "return_date" varchar(32),
+        "cabin" varchar(32) DEFAULT 'economy',
+        "carrier" varchar(128),
+        "price" numeric(10, 2) NOT NULL,
+        "currency" varchar(10) DEFAULT 'EUR',
+        "target_price" numeric(10, 2),
+        "data_source" varchar(32) DEFAULT 'duffel_live',
+        "captured_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+    `);
+
+    console.log('[MIGRATE] Migrations applied successfully: users, saved_trips, loyalty_balances, points_forecasts, external_bookings, user_cards, fare_snapshots.');
     return true;
   } finally {
     client.release();

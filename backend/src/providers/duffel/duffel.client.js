@@ -128,6 +128,141 @@ export class DuffelClient {
       throw err;
     }
   }
+
+  /**
+   * Revalidates a single offer with Duffel
+   */
+  async getOffer(offerId) {
+    if (!this.isConfigured()) {
+      throw new ProviderUnconfiguredError(
+        'Duffel API access token is not configured. Supply DUFFEL_ACCESS_TOKEN in backend/.env.'
+      );
+    }
+
+    const token = this.getToken();
+    const url = `${this.baseUrl}/air/offers/${offerId}?return_available_services=false`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      logger.info('Revalidating flight offer with Duffel API', { offerId });
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Duffel-Version': this.apiVersion,
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const duffelError =
+          json.errors?.[0]?.message ||
+          json.errors?.[0]?.title ||
+          `Status ${res.status}: ${res.statusText}`;
+
+        if (res.status === 404) {
+          throw new ProviderError(`Duffel Offer Expired or Not Found: ${duffelError}`);
+        }
+        if (res.status === 429) {
+          throw new ProviderRateLimitError(`Duffel API rate limit exceeded: ${duffelError}`);
+        }
+        throw new ProviderError(`Duffel Offer Error (${res.status}): ${duffelError}`);
+      }
+
+      return json;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || err.message?.includes('timed out')) {
+        throw new ProviderTimeoutError('Duffel offer revalidation timed out or was cancelled');
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Creates a confirmed or hold order via Duffel Orders API
+   */
+  async createOrder({ selectedOffers, passengers, payments, type = 'instant' }) {
+    if (!this.isConfigured()) {
+      throw new ProviderUnconfiguredError(
+        'Duffel API access token is not configured. Supply DUFFEL_ACCESS_TOKEN in backend/.env.'
+      );
+    }
+
+    const token = this.getToken();
+    const url = `${this.baseUrl}/air/orders`;
+
+    const requestBody = {
+      data: {
+        selected_offers: selectedOffers,
+        passengers,
+        payments,
+        type,
+      },
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      logger.info('Creating flight order via Duffel API', {
+        selectedOffers,
+        passengerCount: passengers?.length,
+        type,
+      });
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Duffel-Version': this.apiVersion,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const duffelError =
+          json.errors?.[0]?.message ||
+          json.errors?.[0]?.title ||
+          `Status ${res.status}: ${res.statusText}`;
+        const errorCode = json.errors?.[0]?.code || 'DUFFEL_ORDER_ERROR';
+
+        logger.warn('Duffel flight order rejected by provider', {
+          status: res.status,
+          code: errorCode,
+          message: duffelError,
+        });
+
+        const err = new ProviderError(`Duffel booking rejected: ${duffelError}`);
+        err.providerCode = errorCode;
+        err.statusCode = res.status === 400 ? 400 : 502;
+        throw err;
+      }
+
+      return json;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || err.message?.includes('timed out')) {
+        throw new ProviderTimeoutError('Duffel flight booking request timed out or was cancelled');
+      }
+      throw err;
+    }
+  }
 }
 
 export const duffelClient = new DuffelClient();
